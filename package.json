@@ -1,0 +1,19 @@
+{
+  "name": "swissfarm",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "build:backend": "pnpm --filter backend build",
+    "build:admin": "pnpm --filter admin build",
+    "build:packages": "pnpm --filter './packages/**' build",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0"
+  }
+}

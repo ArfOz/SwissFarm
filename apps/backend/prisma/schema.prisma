@@ -1,0 +1,32 @@
+// This is your Prisma schema file
+// https://www.prisma.io/docs/concepts/components/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Farm {
+  id           String   @id @default(cuid())
+  name         String
+  type         FarmType
+  products     String[]
+  lat          Float
+  lng          Float
+  address      String
+  canton       String
+  website      String?
+  openingHours String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum FarmType {
+  milk
+  self_service  @map("self-service")
+  pick_your_own @map("pick-your-own")
+  kids
+}
