@@ -1,8 +1,24 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Farm, FarmType } from '@swissfarm/types';
+import { Farm, FarmType, FARM_TYPES } from '@swissfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
+
+export interface FarmWithDistance extends Farm {
+  distance: number; // km
+}
+
+/** Haversine distance in km between two lat/lng points */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 // Map Prisma DB enum values → shared FarmType
 function toFarm(row: {
@@ -89,6 +105,50 @@ export class FarmsService {
   async remove(id: string): Promise<void> {
     await this.findOne(id);
     await this.prisma.farm.delete({ where: { id } });
+  }
+
+  /** GET /farms/nearby — farms within `radius` km of the given coordinates */
+  async findNearby(lat: number, lng: number, radius = 25): Promise<FarmWithDistance[]> {
+    const rows = await this.prisma.farm.findMany({ orderBy: { createdAt: 'asc' } });
+    return rows
+      .map((row) => ({
+        ...toFarm(row),
+        distance: Math.round(haversineKm(lat, lng, row.lat, row.lng) * 10) / 10,
+      }))
+      .filter((f) => f.distance <= radius)
+      .sort((a, b) => a.distance - b.distance);
+  }
+
+  /** GET /farms/search — full-text search on name and address */
+  async search(query: string): Promise<Farm[]> {
+    const q = query.trim().toLowerCase();
+    if (!q) return this.findAll();
+    const rows = await this.prisma.farm.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { address: { contains: q, mode: 'insensitive' } },
+          { canton: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { name: 'asc' },
+    });
+    return rows.map(toFarm);
+  }
+
+  /** GET /farms/types — list all available farm types */
+  getTypes(): FarmType[] {
+    return FARM_TYPES;
+  }
+
+  /** GET /farms/cantons — list distinct cantons present in the DB */
+  async getCantons(): Promise<string[]> {
+    const rows = await this.prisma.farm.findMany({
+      select: { canton: true },
+      distinct: ['canton'],
+      orderBy: { canton: 'asc' },
+    });
+    return rows.map((r) => r.canton);
   }
 }
 

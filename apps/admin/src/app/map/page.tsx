@@ -14,19 +14,19 @@ export default async function MapPage() {
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Harita</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Map</h1>
         <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full shadow">
-          {farms.length} çiftlik
+          {farms.length} farm{farms.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3">
         {[
-          { label: 'Süt Çiftliği', color: '#3b82f6' },
+          { label: 'Milk Farm', color: '#3b82f6' },
           { label: 'Self-Service', color: '#f59e0b' },
-          { label: 'Kendin Topla', color: '#10b981' },
-          { label: 'Çocuk Çiftliği', color: '#ec4899' },
+          { label: 'Pick Your Own', color: '#10b981' },
+          { label: 'Kids Farm', color: '#ec4899' },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1 shadow text-xs font-medium text-gray-700">
             <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: item.color }} />

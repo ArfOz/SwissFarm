@@ -57,7 +57,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
       await onSave(data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setSaving(false);
     }
@@ -68,7 +68,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
         <div className="bg-green-800 text-white px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
-            {farm ? 'Çiftliği Düzenle' : 'Yeni Çiftlik Ekle'}
+            {farm ? 'Edit Farm' : 'Add New Farm'}
           </h2>
           <button onClick={onClose} className="text-green-200 hover:text-white text-xl leading-none">
             ✕
@@ -84,18 +84,18 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">İsim *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
               <input
                 required
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Çiftlik adı"
+                placeholder="Farm name"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tür *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
               <select
                 value={form.type}
                 onChange={(e) => set('type', e.target.value as FarmType)}
@@ -110,7 +110,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kanton *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Canton *</label>
               <input
                 required
                 value={form.canton}
@@ -122,18 +122,18 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adres *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
               <input
                 required
                 value={form.address}
                 onChange={(e) => set('address', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Sokak no, Posta kodu Şehir"
+                placeholder="Street no, Postal code City"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Enlem (lat) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Latitude (lat) *</label>
               <input
                 required
                 type="number"
@@ -148,7 +148,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Boylam (lng) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Longitude (lng) *</label>
               <input
                 required
                 type="number"
@@ -164,13 +164,13 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ürünler (virgülle ayır)
+                Products (comma-separated)
               </label>
               <input
                 value={productsInput}
                 onChange={(e) => setProductsInput(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="süt, peynir, tereyağı"
+                placeholder="milk, cheese, butter"
               />
             </div>
 
@@ -180,18 +180,18 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                 value={form.website ?? ''}
                 onChange={(e) => set('website', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="https://ornekCiftlik.ch"
+                placeholder="https://example-farm.ch"
                 type="url"
               />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Çalışma Saatleri</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Opening Hours</label>
               <input
                 value={form.openingHours ?? ''}
                 onChange={(e) => set('openingHours', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Pzt–Cum 08:00–18:00"
+                placeholder="Mon–Fri 08:00–18:00"
               />
             </div>
           </div>
@@ -202,14 +202,14 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              İptal
+              Cancel
             </button>
             <button
               type="submit"
               disabled={saving}
               className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50"
             >
-              {saving ? 'Kaydediliyor...' : farm ? 'Güncelle' : 'Ekle'}
+              {saving ? 'Saving...' : farm ? 'Update' : 'Add'}
             </button>
           </div>
         </form>
