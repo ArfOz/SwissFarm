@@ -26,3 +26,7 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+
+# Import (local only)
+apps/backend/src/import/
