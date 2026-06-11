@@ -1,6 +1,6 @@
 import { Farm, FarmType } from '@swissfarm/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
 
 export async function fetchFarms(type?: FarmType): Promise<Farm[]> {
   const url = type

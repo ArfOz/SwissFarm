@@ -7,53 +7,72 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
 
+enum FarmType {
+  milk
+  self_service
+  pick_your_own
+  kids
 }
 
 model Farm {
-  id           String          @id @default(cuid())
+  id           String            @id @default(cuid())
   name         String
+  type         FarmType          @default(milk)
   lat          Float
   lng          Float
   address      String
   canton       String
   website      String?
-  openingHours String?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  openingHours FarmOpeningHour[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  isActive     Boolean           @default(true)
 
-  products     FarmProduct[]
-  activities   FarmActivity[]
+  products FarmProduct[]
 }
 
 model Product {
-  id       String         @id @default(cuid())
-  name     String         @unique
-  farms    FarmProduct[]
-}
-
-model Activity {
-  id       String         @id @default(cuid())
-  name     String         @unique
-  farms    FarmActivity[]
+  id    String        @id @default(cuid())
+  name  String        @unique
+  farms FarmProduct[]
 }
 
 model FarmProduct {
   farmId    String
   productId String
 
-  farm      Farm     @relation(fields: [farmId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
+  farm    Farm    @relation(fields: [farmId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
 
   @@id([farmId, productId])
 }
 
-model FarmActivity {
-  farmId     String
-  activityId String
+model OpeningHour {
+  id    String            @id @default(cuid())
+  day   Weekday
+  open  String? // "08:00"
+  close String? // "18:00"
+  farms FarmOpeningHour[]
+}
 
-  farm       Farm      @relation(fields: [farmId], references: [id])
-  activity   Activity  @relation(fields: [activityId], references: [id])
+model FarmOpeningHour {
+  farmId        String
+  openingHourId String
 
-  @@id([farmId, activityId])
+  farm        Farm        @relation(fields: [farmId], references: [id])
+  openingHour OpeningHour @relation(fields: [openingHourId], references: [id])
+
+  @@id([farmId, openingHourId])
+}
+
+enum Weekday {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
 }

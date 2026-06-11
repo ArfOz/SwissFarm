@@ -1,17 +1,21 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Farm, FarmType, FARM_TYPES } from '@swissfarm/types';
 import { createFarm, deleteFarm, updateFarm } from '@/lib/api';
 import FarmFormModal from './FarmFormModal';
 
-const TYPE_LABELS: Record<FarmType, string> = {
+const TYPE_LABELS: Record<string, string> = {
   milk: 'Milk Farm',
   'self-service': 'Self-Service',
+  self_service: 'Self-Service',
   'pick-your-own': 'Pick Your Own',
+  pick_your_own: 'Pick Your Own',
   kids: 'Kids Farm',
 };
+
+const PAGE_SIZE = 8;
 
 interface FarmsTableProps {
   farms: Farm[];
@@ -23,6 +27,14 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
   const [farms, setFarms] = useState<Farm[]>(initialFarms);
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; farm?: Farm } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    console.log('All farms:', farms);
+    if (farms.length > 0) {
+      console.log('First farm type raw:', farms[0].type);
+    }
+  }, [farms]);
 
   const handleTypeChange = (type: string) => {
     router.push(type ? `/farms?type=${type}` : '/farms');
@@ -49,9 +61,20 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
     }
   };
 
-  const displayed = selectedType
-    ? farms.filter((f) => f.type === selectedType)
-    : farms;
+  const allDisplayed = useMemo(
+    () =>
+      selectedType
+        ? farms.filter((f) => f.type === selectedType)
+        : farms,
+    [farms, selectedType]
+  );
+
+  const totalPages = Math.max(1, Math.ceil(allDisplayed.length / PAGE_SIZE));
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedFarms = allDisplayed.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
 
   return (
     <>
@@ -76,7 +99,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
               <option value="">All</option>
               {FARM_TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {TYPE_LABELS[t]}
+                  {t}
                 </option>
               ))}
             </select>
@@ -94,7 +117,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {['Name', 'Type', 'Canton', 'Address', 'Products', 'Opening Hours', ''].map((h) => (
+                {['Name', 'Type', 'Canton', 'Address', 'Products', ''].map((h) => (
                   <th
                     key={h}
                     className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -105,14 +128,14 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {displayed.length === 0 ? (
+              {paginatedFarms.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-10 text-center text-gray-400">
                     No farms found.
                   </td>
                 </tr>
               ) : (
-                displayed.map((farm) => (
+                paginatedFarms.map((farm) => (
                   <tr key={farm.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="font-medium text-gray-900">{farm.name}</div>
@@ -127,15 +150,12 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                         </a>
                       )}
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {TYPE_LABELS[farm.type]}
-                      </span>
+                    <td className="px-5 py-4 text-gray-700 font-medium">
+                      {farm.type || '—'}
                     </td>
                     <td className="px-5 py-4 text-gray-600 font-medium">{farm.canton}</td>
                     <td className="px-5 py-4 text-gray-600 max-w-xs">{farm.address}</td>
                     <td className="px-5 py-4 text-gray-600">{farm.products.join(', ')}</td>
-                    <td className="px-5 py-4 text-gray-600">{farm.openingHours ?? '—'}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <button
@@ -159,6 +179,46 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {allDisplayed.length > PAGE_SIZE && (
+          <div className="px-5 py-3 border-t border-gray-200 flex items-center justify-between">
+            <span className="text-sm text-gray-500">
+              Showing {(safePage - 1) * PAGE_SIZE + 1}–
+              {Math.min(safePage * PAGE_SIZE, allDisplayed.length)} of{' '}
+              {allDisplayed.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="px-3 py-1 text-xs font-medium rounded border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ← Prev
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-1 text-xs font-medium rounded ${
+                    page === safePage
+                      ? 'bg-green-700 text-white'
+                      : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="px-3 py-1 text-xs font-medium rounded border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

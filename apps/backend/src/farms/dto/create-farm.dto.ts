@@ -1,4 +1,4 @@
-import { Farm } from '@swissfarm/types';
+import { Farm, OpeningHourEntry } from '@swissfarm/types';
 
 export class CreateFarmDto implements Omit<Farm, 'id'> {
   name: string;
@@ -8,5 +8,5 @@ export class CreateFarmDto implements Omit<Farm, 'id'> {
   address: string;
   canton: string;
   website?: string;
-  openingHours?: string;
+  openingHours?: OpeningHourEntry[];
 }

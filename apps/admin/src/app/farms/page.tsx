@@ -2,7 +2,7 @@ import { Farm } from '@swissfarm/types';
 import FarmsTable from '@/components/farms/FarmsTable';
 
 async function getFarms(type?: string): Promise<Farm[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
   const url = type ? `${apiUrl}/farms?type=${encodeURIComponent(type)}` : `${apiUrl}/farms`;
 
   const res = await fetch(url, { cache: 'no-store' });

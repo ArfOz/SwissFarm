@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { Farm, FARM_TYPES, FarmType } from '@swissfarm/types';
 
-const TYPE_LABELS: Record<FarmType, string> = {
+const TYPE_LABELS: Record<string, string> = {
   milk: 'Milk Farm',
-  'self-service': 'Self-Service',
-  'pick-your-own': 'Pick Your Own',
+  self_service: 'Self-Service',
+  pick_your_own: 'Pick Your Own',
   kids: 'Kids Farm',
 };
 
@@ -26,23 +26,24 @@ const empty: FarmFormData = {
   address: '',
   canton: '',
   website: '',
-  openingHours: '',
 };
 
 export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalProps) {
   const [form, setForm] = useState<FarmFormData>(
     farm ? { ...farm } : { ...empty },
   );
+
   const [productsInput, setProductsInput] = useState(
     farm ? farm.products.join(', ') : '',
   );
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const set = (key: keyof FarmFormData, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
@@ -62,6 +63,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
       setSaving(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -185,15 +187,6 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
               />
             </div>
 
-            <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Opening Hours</label>
-              <input
-                value={form.openingHours ?? ''}
-                onChange={(e) => set('openingHours', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Mon–Fri 08:00–18:00"
-              />
-            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
