@@ -2,6 +2,25 @@ import { Farm, FarmType } from '@swissfarm/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
 
+export interface DashboardStats {
+  totalFarms: number;
+  farmTypes: number;
+  cantons: number;
+}
+
+export async function fetchDashboardStats(): Promise<DashboardStats> {
+  const [farms, types, cantons] = await Promise.all([
+    fetchFarms(),
+    fetch(`${API_URL}/farms/types`, { cache: 'no-store' }).then((r) => r.json()),
+    fetch(`${API_URL}/farms/cantons`, { cache: 'no-store' }).then((r) => r.json()),
+  ]);
+  return {
+    totalFarms: farms.length,
+    farmTypes: (types as string[]).length,
+    cantons: (cantons as string[]).length,
+  };
+}
+
 export async function fetchFarms(type?: FarmType): Promise<Farm[]> {
   const url = type
     ? `${API_URL}/farms?type=${encodeURIComponent(type)}`

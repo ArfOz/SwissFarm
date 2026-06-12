@@ -12,15 +12,15 @@ const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png
 
 const TYPE_COLORS: Record<FarmType, string> = {
   milk: '#3b82f6',
-  'self-service': '#f59e0b',
-  'pick-your-own': '#10b981',
+  self_service: '#f59e0b',
+  pick_your_own: '#10b981',
   kids: '#ec4899',
 };
 
 const TYPE_LABELS: Record<FarmType, string> = {
   milk: 'Milk Farm',
-  'self-service': 'Self-Service',
-  'pick-your-own': 'Pick Your Own',
+  self_service: 'Self-Service',
+  pick_your_own: 'Pick Your Own',
   kids: 'Kids Farm',
 };
 
@@ -82,8 +82,8 @@ export default function FarmsMap({ farms }: FarmsMapProps) {
               </span>
               <p className="text-xs text-gray-600 mb-1">📍 {farm.address}</p>
               <p className="text-xs text-gray-600 mb-1">🏔 {farm.canton}</p>
-              {farm.openingHours && (
-                <p className="text-xs text-gray-600 mb-1">🕐 {farm.openingHours}</p>
+              {farm.openingHours && farm.openingHours.length > 0 && (
+                <p className="text-xs text-gray-600 mb-1">🕐 {farm.openingHours.length} entries</p>
               )}
               {farm.products.length > 0 && (
                 <p className="text-xs text-gray-500 mt-1">{farm.products.join(', ')}</p>
