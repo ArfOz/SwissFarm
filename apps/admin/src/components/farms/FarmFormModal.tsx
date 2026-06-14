@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Farm, FARM_TYPES, FarmType } from '@swissfarm/types';
-
-const TYPE_LABELS: Record<string, string> = {
-  milk: 'Milk Farm',
-  self_service: 'Self-Service',
-  pick_your_own: 'Pick Your Own',
-  kids: 'Kids Farm',
-};
+import { Farm, FARM_TYPES, FarmType, OpeningHourEntry, TYPE_LABELS, DAYS, DAY_LABELS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
 
 type FarmFormData = Omit<Farm, 'id'>;
 
@@ -26,11 +19,12 @@ const empty: FarmFormData = {
   address: '',
   canton: '',
   website: '',
+  openingHours: DEFAULT_OPENING_HOURS,
 };
 
 export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalProps) {
   const [form, setForm] = useState<FarmFormData>(
-    farm ? { ...farm } : { ...empty },
+    farm ? { ...empty, ...farm, openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS } : { ...empty },
   );
 
   const [productsInput, setProductsInput] = useState(
@@ -43,7 +37,16 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
   const set = (key: keyof FarmFormData, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const updateOpeningHour = (day: string, field: 'open' | 'close', value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      openingHours: (prev.openingHours ?? DEFAULT_OPENING_HOURS).map((oh) =>
+        oh.day === day ? { ...oh, [field]: value || null } : oh,
+      ),
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
@@ -54,6 +57,11 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
           .split(',')
           .map((p) => p.trim())
           .filter(Boolean),
+        openingHours: (form.openingHours ?? DEFAULT_OPENING_HOURS).map((oh) => ({
+          ...oh,
+          open: oh.open || null,
+          close: oh.close || null,
+        })),
       };
       await onSave(data);
       onClose();
@@ -64,10 +72,9 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
     }
   };
 
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
         <div className="bg-green-800 text-white px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
             {farm ? 'Edit Farm' : 'Add New Farm'}
@@ -77,7 +84,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[70vh]">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto max-h-[75vh]">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded px-3 py-2">
               {error}
@@ -113,14 +120,19 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Canton *</label>
-              <input
+              <select
                 required
                 value={form.canton}
                 onChange={(e) => set('canton', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="ZH"
-                maxLength={2}
-              />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              >
+                <option value="" disabled>Select canton</option>
+                {CANTONS.map((c) => (
+                  <option key={c} value={c}>
+                    {c} — {CANTON_LABELS[c]}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="col-span-2">
@@ -186,7 +198,46 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                 type="url"
               />
             </div>
+          </div>
 
+          {/* Opening Hours Section */}
+          <div className="border-t border-gray-200 pt-4">
+            <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wider">Opening Hours</h3>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500 uppercase tracking-wider">
+                  <th className="pb-2 pr-4">Day</th>
+                  <th className="pb-2 pr-4">Open</th>
+                  <th className="pb-2">Close</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {DAYS.map((day) => {
+                  const oh = (form.openingHours ?? DEFAULT_OPENING_HOURS).find((h) => h.day === day);
+                  return (
+                    <tr key={day}>
+                      <td className="py-2 pr-4 text-gray-700 font-medium">{DAY_LABELS[day]}</td>
+                      <td className="py-2 pr-4">
+                        <input
+                          type="time"
+                          value={oh?.open ?? ''}
+                          onChange={(e) => updateOpeningHour(day, 'open', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </td>
+                      <td className="py-2">
+                        <input
+                          type="time"
+                          value={oh?.close ?? ''}
+                          onChange={(e) => updateOpeningHour(day, 'close', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

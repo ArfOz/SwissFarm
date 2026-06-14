@@ -2,18 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
-import { Farm, FarmType, FARM_TYPES } from '@swissfarm/types';
+import { Farm, FarmType, FARM_TYPES, TYPE_LABELS } from '@swissfarm/types';
 import { createFarm, deleteFarm, updateFarm } from '@/lib/api';
 import FarmFormModal from './FarmFormModal';
-
-const TYPE_LABELS: Record<string, string> = {
-  milk: 'Milk Farm',
-  'self-service': 'Self-Service',
-  self_service: 'Self-Service',
-  'pick-your-own': 'Pick Your Own',
-  pick_your_own: 'Pick Your Own',
-  kids: 'Kids Farm',
-};
 
 const PAGE_SIZE = 8;
 
