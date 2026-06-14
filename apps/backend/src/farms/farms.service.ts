@@ -30,6 +30,7 @@ type FarmRow = {
   address: string;
   canton: string;
   website: string | null;
+  isActive: boolean;
   openingHours: { openingHour: { id: string; day: string; open: string | null; close: string | null } }[];
   products: { product: { name: string } }[];
 };
@@ -51,6 +52,7 @@ function toFarm(row: FarmRow): Farm {
     address: row.address,
     canton: row.canton,
     website: row.website ?? undefined,
+    isActive: row.isActive,
     openingHours,
   };
 }
@@ -193,6 +195,7 @@ export class FarmsService {
         ...(dto.address !== undefined && { address: dto.address }),
         ...(dto.canton !== undefined && { canton: dto.canton }),
         ...(dto.website !== undefined && { website: dto.website || null }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         ...(Object.keys(productUpdate).length > 0 && { products: productUpdate }),
       },
       include: INCLUDE,

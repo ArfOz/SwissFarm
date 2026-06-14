@@ -1,17 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Farm, FARM_TYPES, FarmType, OpeningHourEntry, TYPE_LABELS, DAYS, DAY_LABELS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
-
-type FarmFormData = Omit<Farm, 'id'>;
+import { Farm, CreateFarmInput, UpdateFarmInput, FARM_TYPES, FarmType, TYPE_LABELS, DAYS, DAY_LABELS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
 
 interface FarmFormModalProps {
   farm?: Farm; // undefined = create, defined = edit
   onClose: () => void;
-  onSave: (data: FarmFormData) => Promise<void>;
+  onSave: (data: CreateFarmInput) => Promise<void>;
 }
 
-const empty: FarmFormData = {
+const empty: CreateFarmInput = {
   name: '',
   type: 'milk',
   products: [],
@@ -19,11 +17,12 @@ const empty: FarmFormData = {
   address: '',
   canton: '',
   website: '',
+  isActive: true,
   openingHours: DEFAULT_OPENING_HOURS,
 };
 
 export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalProps) {
-  const [form, setForm] = useState<FarmFormData>(
+  const [form, setForm] = useState<CreateFarmInput>(
     farm ? { ...empty, ...farm, openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS } : { ...empty },
   );
 
@@ -34,7 +33,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const set = (key: keyof FarmFormData, value: unknown) =>
+  const set = (key: keyof CreateFarmInput, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const updateOpeningHour = (day: string, field: 'open' | 'close', value: string) => {
@@ -51,7 +50,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
     setSaving(true);
     setError(null);
     try {
-      const data: FarmFormData = {
+      const data: CreateFarmInput = {
         ...form,
         products: productsInput
           .split(',')
@@ -197,6 +196,18 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                 placeholder="https://example-farm.ch"
                 type="url"
               />
+            </div>
+
+            <div className="col-span-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={form.isActive}
+                  onChange={(e) => set('isActive', e.target.checked)}
+                  className="rounded border-gray-300 text-green-700 focus:ring-green-500"
+                />
+                Active
+              </label>
             </div>
           </div>
 

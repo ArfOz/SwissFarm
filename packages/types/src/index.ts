@@ -18,10 +18,16 @@ export interface Farm {
   address: string;
   canton: string;
   website?: string;
+  isActive: boolean;
   openingHours?: OpeningHourEntry[];
 }
 
 export type FarmType = Farm['type'];
+
+// DTOs for creating and updating farms — shared between backend and admin
+export type CreateFarmInput = Omit<Farm, 'id'>;
+
+export type UpdateFarmInput = Partial<CreateFarmInput>;
 
 export const FARM_TYPES: FarmType[] = ['milk', 'self_service', 'pick_your_own', 'kids'];
 

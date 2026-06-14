@@ -1,12 +1,13 @@
-import { Farm, OpeningHourEntry } from '@swissfarm/types';
+import { UpdateFarmInput } from '@swissfarm/types';
 
-export class UpdateFarmDto implements Partial<Omit<Farm, 'id'>> {
+export class UpdateFarmDto implements UpdateFarmInput {
   name?: string;
-  type?: Farm['type'];
+  type?: UpdateFarmInput['type'];
   products?: string[];
   location?: { lat: number; lng: number };
   address?: string;
   canton?: string;
   website?: string;
-  openingHours?: OpeningHourEntry[];
+  isActive?: boolean;
+  openingHours?: UpdateFarmInput['openingHours'];
 }

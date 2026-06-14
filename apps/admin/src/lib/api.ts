@@ -1,4 +1,4 @@
-import { Farm, FarmType } from '@swissfarm/types';
+import { Farm, FarmType, CreateFarmInput } from '@swissfarm/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
 
@@ -35,7 +35,7 @@ export async function fetchFarm(id: string): Promise<Farm> {
   if (!res.ok) throw new Error(`Failed to fetch farm ${id}: ${res.statusText}`);
   return res.json() as Promise<Farm>;
 }
-export async function createFarm(data: Omit<Farm, 'id'>): Promise<Farm> {
+export async function createFarm(data: CreateFarmInput): Promise<Farm> {
   const res = await fetch(`${API_URL}/farms`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -45,7 +45,7 @@ export async function createFarm(data: Omit<Farm, 'id'>): Promise<Farm> {
   return res.json() as Promise<Farm>;
 }
 
-export async function updateFarm(id: string, data: Partial<Omit<Farm, 'id'>>): Promise<Farm> {
+export async function updateFarm(id: string, data: Partial<CreateFarmInput>): Promise<Farm> {
   const res = await fetch(`${API_URL}/farms/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

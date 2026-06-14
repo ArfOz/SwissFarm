@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useMemo, useEffect } from 'react';
-import { Farm, FarmType, FARM_TYPES, TYPE_LABELS } from '@swissfarm/types';
+import { Farm, FarmType, CreateFarmInput, FARM_TYPES, TYPE_LABELS } from '@swissfarm/types';
 import { createFarm, deleteFarm, updateFarm } from '@/lib/api';
 import FarmFormModal from './FarmFormModal';
 
@@ -31,7 +31,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
     router.push(type ? `/farms?type=${type}` : '/farms');
   };
 
-  const handleSave = async (data: Omit<Farm, 'id'>) => {
+  const handleSave = async (data: CreateFarmInput) => {
     if (modal?.mode === 'create') {
       const created = await createFarm(data);
       setFarms((prev) => [...prev, created]);
@@ -108,7 +108,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {['Name', 'Type', 'Canton', 'Address', 'Products', ''].map((h) => (
+                {['Name', 'Type', 'Canton', 'Address', 'Products', 'Status', ''].map((h) => (
                   <th
                     key={h}
                     className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -147,6 +147,17 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                     <td className="px-5 py-4 text-gray-600 font-medium">{farm.canton}</td>
                     <td className="px-5 py-4 text-gray-600 max-w-xs">{farm.address}</td>
                     <td className="px-5 py-4 text-gray-600">{farm.products.join(', ')}</td>
+                    <td className="px-5 py-4">
+                      {farm.isActive ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Passive
+                        </span>
+                      )}
+                    </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2">
                         <button
