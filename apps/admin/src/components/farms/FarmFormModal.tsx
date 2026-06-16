@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Farm, CreateFarmInput, UpdateFarmInput, FARM_TYPES, FarmType, TYPE_LABELS, DAYS, DAY_LABELS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
+import { Farm, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
+import { useI18n } from '@/lib/i18n';
 
 interface FarmFormModalProps {
   farm?: Farm; // undefined = create, defined = edit
@@ -22,6 +23,7 @@ const empty: CreateFarmInput = {
 };
 
 export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalProps) {
+  const { t } = useI18n();
   const [form, setForm] = useState<CreateFarmInput>(
     farm ? { ...empty, ...farm, openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS } : { ...empty },
   );
@@ -65,7 +67,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
       await onSave(data);
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('common.error'));
     } finally {
       setSaving(false);
     }
@@ -76,7 +78,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
         <div className="bg-green-800 text-white px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
-            {farm ? 'Edit Farm' : 'Add New Farm'}
+            {farm ? t('farms.editFarm') : t('farms.addFarm')}
           </h2>
           <button onClick={onClose} className="text-green-200 hover:text-white text-xl leading-none">
             ✕
@@ -92,40 +94,40 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.name')}</label>
               <input
                 required
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Farm name"
+                placeholder={t('farms.form.placeholder.name')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.type')}</label>
               <select
                 value={form.type}
                 onChange={(e) => set('type', e.target.value as FarmType)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
               >
-                {FARM_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {TYPE_LABELS[t]}
+                {FARM_TYPES.map((ft) => (
+                  <option key={ft} value={ft}>
+                    {t(`type.${ft}`)}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Canton *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.canton')}</label>
               <select
                 required
                 value={form.canton}
                 onChange={(e) => set('canton', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
               >
-                <option value="" disabled>Select canton</option>
+                <option value="" disabled>{t('farms.form.selectCanton')}</option>
                 {CANTONS.map((c) => (
                   <option key={c} value={c}>
                     {c} — {CANTON_LABELS[c]}
@@ -135,18 +137,18 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.address')}</label>
               <input
                 required
                 value={form.address}
                 onChange={(e) => set('address', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="Street no, Postal code City"
+                placeholder={t('farms.form.placeholder.address')}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Latitude (lat) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.latitude')}</label>
               <input
                 required
                 type="number"
@@ -161,7 +163,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Longitude (lng) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.longitude')}</label>
               <input
                 required
                 type="number"
@@ -177,23 +179,23 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Products (comma-separated)
+                {t('farms.form.products')}
               </label>
               <input
                 value={productsInput}
                 onChange={(e) => setProductsInput(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="milk, cheese, butter"
+                placeholder={t('farms.form.placeholder.products')}
               />
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.website')}</label>
               <input
                 value={form.website ?? ''}
                 onChange={(e) => set('website', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="https://example-farm.ch"
+                placeholder={t('farms.form.placeholder.website')}
                 type="url"
               />
             </div>
@@ -206,20 +208,20 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                   onChange={(e) => set('isActive', e.target.checked)}
                   className="rounded border-gray-300 text-green-700 focus:ring-green-500"
                 />
-                Active
+                {t('farms.form.active')}
               </label>
             </div>
           </div>
 
           {/* Opening Hours Section */}
           <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wider">Opening Hours</h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3 uppercase tracking-wider">{t('farms.form.openingHours')}</h3>
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-gray-500 uppercase tracking-wider">
-                  <th className="pb-2 pr-4">Day</th>
-                  <th className="pb-2 pr-4">Open</th>
-                  <th className="pb-2">Close</th>
+                  <th className="pb-2 pr-4">{t('farms.form.day')}</th>
+                  <th className="pb-2 pr-4">{t('farms.form.open')}</th>
+                  <th className="pb-2">{t('farms.form.close')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -227,7 +229,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                   const oh = (form.openingHours ?? DEFAULT_OPENING_HOURS).find((h) => h.day === day);
                   return (
                     <tr key={day}>
-                      <td className="py-2 pr-4 text-gray-700 font-medium">{DAY_LABELS[day]}</td>
+                      <td className="py-2 pr-4 text-gray-700 font-medium">{t(`day.${day}`)}</td>
                       <td className="py-2 pr-4">
                         <input
                           type="time"
@@ -257,14 +259,14 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Cancel
+              {t('farms.cancel')}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : farm ? 'Update' : 'Add'}
+              {saving ? t('farms.saving') : farm ? t('farms.save') : t('farms.addFarm')}
             </button>
           </div>
         </form>

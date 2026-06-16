@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useMemo, useEffect } from 'react';
-import { Farm, FarmType, CreateFarmInput, FARM_TYPES, TYPE_LABELS } from '@swissfarm/types';
+import { useState, useMemo } from 'react';
+import { Farm, FarmType, CreateFarmInput, FARM_TYPES } from '@swissfarm/types';
 import { createFarm, deleteFarm, updateFarm } from '@/lib/api';
+import { useI18n } from '@/lib/i18n';
 import FarmFormModal from './FarmFormModal';
 
 const PAGE_SIZE = 8;
@@ -15,17 +16,11 @@ interface FarmsTableProps {
 
 export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsTableProps) {
   const router = useRouter();
+  const { t, tps } = useI18n();
   const [farms, setFarms] = useState<Farm[]>(initialFarms);
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; farm?: Farm } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-
-  useEffect(() => {
-    console.log('All farms:', farms);
-    if (farms.length > 0) {
-      console.log('First farm type raw:', farms[0].type);
-    }
-  }, [farms]);
 
   const handleTypeChange = (type: string) => {
     router.push(type ? `/farms?type=${type}` : '/farms');
@@ -42,7 +37,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
   };
 
   const handleDelete = async (farm: Farm) => {
-    if (!confirm(`Are you sure you want to delete "${farm.name}"?`)) return;
+    if (!confirm(t('farms.confirmDelete', { name: farm.name }))) return;
     setDeletingId(farm.id);
     try {
       await deleteFarm(farm.id);
@@ -67,6 +62,16 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
     safePage * PAGE_SIZE
   );
 
+  const tableHeaders = [
+    t('farms.name'),
+    t('farms.type'),
+    t('farms.canton'),
+    t('farms.address'),
+    t('farms.products'),
+    t('farms.status'),
+    '',
+  ];
+
   return (
     <>
       {modal && (
@@ -81,16 +86,16 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
         {/* Toolbar */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700">Type:</label>
+            <label className="text-sm font-medium text-gray-700">{t('farms.type')}:</label>
             <select
               value={selectedType ?? ''}
               onChange={(e) => handleTypeChange(e.target.value)}
               className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
             >
-              <option value="">All</option>
-              {FARM_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+              <option value="">{t('farms.allTypes')}</option>
+                {FARM_TYPES.map((ft) => (
+                <option key={ft} value={ft}>
+                  {t(`type.${ft}`)}
                 </option>
               ))}
             </select>
@@ -99,7 +104,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
             onClick={() => setModal({ mode: 'create' })}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors"
           >
-            <span className="text-base leading-none">+</span> New Farm
+            <span className="text-base leading-none">+</span> {t('farms.newFarm')}
           </button>
         </div>
 
@@ -108,7 +113,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
           <table className="min-w-full divide-y divide-gray-200 text-sm">
             <thead className="bg-gray-50">
               <tr>
-                {['Name', 'Type', 'Canton', 'Address', 'Products', 'Status', ''].map((h) => (
+                {tableHeaders.map((h) => (
                   <th
                     key={h}
                     className="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -122,7 +127,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
               {paginatedFarms.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-10 text-center text-gray-400">
-                    No farms found.
+                    {t('farms.noFarms')}
                   </td>
                 </tr>
               ) : (
@@ -142,19 +147,19 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                       )}
                     </td>
                     <td className="px-5 py-4 text-gray-700 font-medium">
-                      {farm.type || '—'}
+                      {t(`type.${farm.type}`) || farm.type || '—'}
                     </td>
                     <td className="px-5 py-4 text-gray-600 font-medium">{farm.canton}</td>
                     <td className="px-5 py-4 text-gray-600 max-w-xs">{farm.address}</td>
-                    <td className="px-5 py-4 text-gray-600">{farm.products.join(', ')}</td>
+                    <td className="px-5 py-4 text-gray-600">{tps(farm.products).join(', ')}</td>
                     <td className="px-5 py-4">
                       {farm.isActive ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Active
+                          {t('farms.active')}
                         </span>
                       ) : (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Passive
+                          {t('farms.passive')}
                         </span>
                       )}
                     </td>
@@ -164,14 +169,14 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                           onClick={() => setModal({ mode: 'edit', farm })}
                           className="text-xs px-2.5 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
                         >
-                          Edit
+                          {t('farms.edit')}
                         </button>
                         <button
                           onClick={() => handleDelete(farm)}
                           disabled={deletingId === farm.id}
                           className="text-xs px-2.5 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
                         >
-                          {deletingId === farm.id ? '...' : 'Delete'}
+                          {deletingId === farm.id ? '...' : t('farms.delete')}
                         </button>
                       </div>
                     </td>
