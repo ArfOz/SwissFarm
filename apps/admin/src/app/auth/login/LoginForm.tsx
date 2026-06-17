@@ -7,8 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
 
 export default function LoginForm() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [apiKey, setApiKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +20,7 @@ export default function LoginForm() {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ apiKey }),
       });
 
       if (!res.ok) {
@@ -31,7 +30,6 @@ export default function LoginForm() {
 
       const data = await res.json();
 
-      // Store token and admin info
       localStorage.setItem('token', data.accessToken);
       localStorage.setItem('admin', JSON.stringify(data.admin));
 
@@ -52,26 +50,14 @@ export default function LoginForm() {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="admin@swissfarm.ch"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">API Key</label>
         <input
           type="password"
           required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="••••••••"
+          placeholder="Enter your API key"
         />
       </div>
 

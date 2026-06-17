@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { PrismaModule } from '../prisma/prisma.module';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
@@ -11,7 +10,6 @@ import { RolesGuard } from './roles.guard';
 
 @Module({
   imports: [
-    PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'swissfarm-jwt-secret-dev',
@@ -24,7 +22,6 @@ import { RolesGuard } from './roles.guard';
     JwtStrategy,
     JwtAuthGuard,
     RolesGuard,
-    // Global JWT guard — @Public() decorator ile public yapılabilir
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
