@@ -30,7 +30,8 @@ model Farm {
   updatedAt    DateTime          @updatedAt
   isActive     Boolean           @default(true)
 
-  products FarmProduct[]
+  products  FarmProduct[]
+  activities FarmActivity[]
 }
 
 model Product {
@@ -65,6 +66,31 @@ model FarmOpeningHour {
   openingHour OpeningHour @relation(fields: [openingHourId], references: [id])
 
   @@id([farmId, openingHourId])
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id    String         @id @default(cuid())
+  name  String         @unique
+  farms FarmActivity[]
+}
+
+model FarmActivity {
+  farmId     String
+  activityId String
+
+  farm     Farm     @relation(fields: [farmId], references: [id])
+  activity Activity @relation(fields: [activityId], references: [id])
+
+  @@id([farmId, activityId])
 }
 
 enum Weekday {

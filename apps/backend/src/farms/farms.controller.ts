@@ -12,6 +12,8 @@ import {
 } from '@nestjs/common';
 import { Farm, FarmType } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
+import { Public } from '../auth/public.decorator';
+import { AdminOnly } from '../auth/admin-only.decorator';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
 import { FarmsService, FarmWithDistance } from './farms.service';
@@ -20,43 +22,27 @@ import { FarmsService, FarmWithDistance } from './farms.service';
 export class FarmsController {
   constructor(private readonly farmsService: FarmsService) {}
 
-  // ── Static routes first (must precede :id) ────────────────────────────────
+  // ── PUBLIC Static routes (must precede :id) ──────────────────────────────
 
-  /**
-   * GET /farms/types
-   * Returns the list of all supported farm types.
-   * Used by mobile filter UIs.
-   */
+  @Public()
   @Get('types')
   getTypes(): FarmType[] {
     return this.farmsService.getTypes();
   }
 
-  /**
-   * GET /farms/products
-   * Returns all available products from the database.
-   * Optionally translated with ?locale=de|fr|en
-   */
+  @Public()
   @Get('products')
   getProducts(@Query('locale') locale?: string): Promise<{ id: string; name: string }[]> {
     return this.farmsService.findAllProducts((locale as Locale) ?? 'en');
   }
 
-  /**
-   * GET /farms/cantons
-   * Returns distinct cantons that have at least one farm.
-   */
+  @Public()
   @Get('cantons')
   getCantons(): Promise<string[]> {
     return this.farmsService.getCantons();
   }
 
-  /**
-   * GET /farms/nearby?lat=46.95&lng=7.44&radius=25&locale=de
-   * Returns farms within `radius` km (default 25) sorted by distance.
-   * Response items include a `distance` field (km, 1 decimal).
-   * Products are translated based on `locale` (default: en).
-   */
+  @Public()
   @Get('nearby')
   findNearby(
     @Query('lat') lat: string,
@@ -73,11 +59,7 @@ export class FarmsController {
     return this.farmsService.findNearby(latNum, lngNum, radiusNum, (locale as Locale) ?? 'en');
   }
 
-  /**
-   * GET /farms/search?q=zurich&locale=de
-   * Full-text search across name, address and canton (case-insensitive).
-   * Products are translated based on `locale` (default: en).
-   */
+  @Public()
   @Get('search')
   search(
     @Query('q') q: string,
@@ -86,12 +68,9 @@ export class FarmsController {
     return this.farmsService.search(q ?? '', (locale as Locale) ?? 'en');
   }
 
-  // ── CRUD ──────────────────────────────────────────────────────────────────
+  // ── PUBLIC CRUD (read-only for mobile) ────────────────────────────────────
 
-  /**
-   * GET /farms?type=milk&locale=de
-   * Products are translated based on `locale` (default: en).
-   */
+  @Public()
   @Get()
   findAll(
     @Query('type') type?: FarmType,
@@ -100,10 +79,7 @@ export class FarmsController {
     return this.farmsService.findAll(type, (locale as Locale) ?? 'en');
   }
 
-  /**
-   * GET /farms/:id?locale=de
-   * Products are translated based on `locale` (default: en).
-   */
+  @Public()
   @Get(':id')
   findOne(
     @Param('id') id: string,
@@ -112,25 +88,15 @@ export class FarmsController {
     return this.farmsService.findOne(id, (locale as Locale) ?? 'en');
   }
 
-  /**
-   * DELETE /farms/:farmId/products/:productId?locale=de
-   * Remove a single product from a farm.
-   */
-  @Delete(':farmId/products/:productId')
-  @HttpCode(200)
-  removeProductFromFarm(
-    @Param('farmId') farmId: string,
-    @Param('productId') productId: string,
-    @Query('locale') locale?: string,
-  ): Promise<Farm> {
-    return this.farmsService.removeProductFromFarm(farmId, productId, (locale as Locale) ?? 'en');
-  }
+  // ── ADMIN-ONLY endpoints ──────────────────────────────────────────────────
 
+  @AdminOnly()
   @Post()
   create(@Body() dto: CreateFarmDto): Promise<Farm> {
     return this.farmsService.create(dto);
   }
 
+  @AdminOnly()
   @Patch(':id')
   update(
     @Param('id') id: string,
@@ -140,9 +106,21 @@ export class FarmsController {
     return this.farmsService.update(id, dto, (locale as Locale) ?? 'en');
   }
 
+  @AdminOnly()
   @Delete(':id')
   @HttpCode(204)
   remove(@Param('id') id: string): Promise<void> {
     return this.farmsService.remove(id);
+  }
+
+  @AdminOnly()
+  @Delete(':farmId/products/:productId')
+  @HttpCode(200)
+  removeProductFromFarm(
+    @Param('farmId') farmId: string,
+    @Param('productId') productId: string,
+    @Query('locale') locale?: string,
+  ): Promise<Farm> {
+    return this.farmsService.removeProductFromFarm(farmId, productId, (locale as Locale) ?? 'en');
   }
 }
