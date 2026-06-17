@@ -1,20 +1,14 @@
 'use client';
 
 import { useState, useCallback, useEffect, ReactNode } from 'react';
+import { ProductInfo } from '@swissfarm/types';
 import { I18nContext, Locale, DynamicTranslations, translate, translateProduct, translateProducts } from '@/lib/i18n';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
 
-function getInitialLocale(): Locale {
-  if (typeof window !== 'undefined') {
-    const stored = localStorage.getItem('locale') as Locale | null;
-    if (stored && ['en', 'de', 'fr'].includes(stored)) return stored;
-  }
-  return 'en';
-}
-
 export default function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+  const [locale, setLocaleState] = useState<Locale>('en');
+  const [mounted, setMounted] = useState(false);
   const [dynamic, setDynamic] = useState<DynamicTranslations | null>(null);
 
   const fetchDynamic = useCallback(async (loc: Locale) => {
@@ -29,6 +23,15 @@ export default function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Initialize locale from localStorage on client mount and fetch translations
+  useEffect(() => {
+    const stored = localStorage.getItem('locale') as Locale | null;
+    const initial = (stored && ['en', 'de', 'fr'].includes(stored)) ? stored : 'en';
+    setLocaleState(initial);
+    setMounted(true);
+    fetchDynamic(initial);
+  }, [fetchDynamic]);
+
   const setLocale = useCallback(
     (newLocale: Locale) => {
       setLocaleState(newLocale);
@@ -37,10 +40,6 @@ export default function I18nProvider({ children }: { children: ReactNode }) {
     },
     [fetchDynamic],
   );
-
-  useEffect(() => {
-    fetchDynamic(locale);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>) => {
@@ -57,11 +56,20 @@ export default function I18nProvider({ children }: { children: ReactNode }) {
   );
 
   const tps = useCallback(
-    (products: string[]) => {
-      return translateProducts(locale, products, dynamic);
+    (products: ProductInfo[]) => {
+      return translateProducts(locale, products.map((p) => p.name), dynamic);
     },
     [locale, dynamic],
   );
+
+  // Wait until mounted to avoid hydration mismatch (localStorage vs server)
+  if (!mounted) {
+    return (
+      <I18nContext.Provider value={{ locale: 'en', setLocale: () => {}, t: (key: string) => key, tp: (p: string) => p, tps: (p: ProductInfo[]) => p.map((pp) => pp.name) }}>
+        {children}
+      </I18nContext.Provider>
+    );
+  }
 
   return (
     <I18nContext.Provider value={{ locale, setLocale, t, tp, tps }}>

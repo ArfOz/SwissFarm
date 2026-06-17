@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import { ProductInfo } from '@swissfarm/types';
 
 export type Locale = 'en' | 'de' | 'fr';
 
@@ -17,7 +18,7 @@ export interface I18nContextValue {
   setLocale: (locale: Locale) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
   tp: (productName: string) => string;
-  tps: (products: string[]) => string[];
+  tps: (products: ProductInfo[]) => string[];
 }
 
 export const I18nContext = createContext<I18nContextValue>({
@@ -25,7 +26,7 @@ export const I18nContext = createContext<I18nContextValue>({
   setLocale: () => {},
   t: (key: string) => key,
   tp: (p: string) => p,
-  tps: (p: string[]) => p,
+  tps: (p: ProductInfo[]) => p.map((pp) => pp.name),
 });
 
 export function useI18n() {
@@ -75,6 +76,10 @@ const UI_TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'farms.form.placeholder.products': 'milk, cheese, butter',
     'farms.form.placeholder.website': 'https://example-farm.ch',
     'farms.form.selectCanton': 'Select canton',
+    'farms.details': 'Farm Details',
+    'farms.viewDetails': 'View Details →',
+    'farms.backToList': '← Back to Farms',
+    'farms.noProducts': 'No products',
     'common.error': 'An error occurred',
     'common.language': 'Language',
   },
@@ -116,6 +121,10 @@ const UI_TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'farms.form.placeholder.products': 'Milch, Käse, Butter',
     'farms.form.placeholder.website': 'https://beispiel-hof.ch',
     'farms.form.selectCanton': 'Kanton wählen',
+    'farms.details': 'Hofdetails',
+    'farms.viewDetails': 'Details anzeigen →',
+    'farms.backToList': '← Zurück zu Höfen',
+    'farms.noProducts': 'Keine Produkte',
     'common.error': 'Ein Fehler ist aufgetreten',
     'common.language': 'Sprache',
   },
@@ -157,6 +166,10 @@ const UI_TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'farms.form.placeholder.products': 'lait, fromage, beurre',
     'farms.form.placeholder.website': 'https://exemple-ferme.ch',
     'farms.form.selectCanton': 'Sélectionner le canton',
+    'farms.details': 'Détails de la ferme',
+    'farms.viewDetails': 'Voir les détails →',
+    'farms.backToList': '← Retour aux fermes',
+    'farms.noProducts': 'Aucun produit',
     'common.error': 'Une erreur est survenue',
     'common.language': 'Langue',
   },

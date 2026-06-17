@@ -3,6 +3,7 @@ import { Farm, FarmType, FARM_TYPES, OpeningHourEntry } from '@swissfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
+import { productTranslations, Locale } from '../i18n/translations';
 
 export interface FarmWithDistance extends Farm {
   distance: number; // km
@@ -20,6 +21,16 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/** Translate a single product name based on locale */
+function translateProductName(name: string, locale: Locale): string {
+  const key = name.toLowerCase();
+  const translations = productTranslations[key];
+  if (translations && translations[locale]) {
+    return translations[locale];
+  }
+  return name; // fallback to original name
+}
+
 // Type for Prisma row with included relations
 type FarmRow = {
   id: string;
@@ -32,11 +43,11 @@ type FarmRow = {
   website: string | null;
   isActive: boolean;
   openingHours: { openingHour: { id: string; day: string; open: string | null; close: string | null } }[];
-  products: { product: { name: string } }[];
+  products: { product: { id: string; name: string } }[];
 };
 
 // Map Prisma DB row → shared Farm type
-function toFarm(row: FarmRow): Farm {
+function toFarm(row: FarmRow, locale: Locale = 'en'): Farm {
   const openingHours: OpeningHourEntry[] = row.openingHours.map((oh) => ({
     day: oh.openingHour.day,
     open: oh.openingHour.open,
@@ -47,7 +58,10 @@ function toFarm(row: FarmRow): Farm {
     id: row.id,
     name: row.name,
     type: (row.type || 'milk') as FarmType,
-    products: row.products.map((fp) => fp.product.name),
+    products: row.products.map((fp) => ({
+      id: fp.product.id,
+      name: translateProductName(fp.product.name, locale),
+    })),
     location: { lat: row.lat, lng: row.lng },
     address: row.address,
     canton: row.canton,
@@ -60,7 +74,7 @@ function toFarm(row: FarmRow): Farm {
 /** Build the Prisma include needed for all queries */
 const INCLUDE = {
   openingHours: { include: { openingHour: true } },
-  products: { include: { product: true } },
+  products: { select: { product: { select: { id: true, name: true } } } },
 } as const;
 
 /**
@@ -103,22 +117,22 @@ async function upsertOpeningHour(
 export class FarmsService {
   constructor(private readonly prisma: PrismaService) {}
 
-        async findAll(type?: FarmType): Promise<Farm[]> {
+        async findAll(type?: FarmType, locale: Locale = 'en'): Promise<Farm[]> {
     const rows = await this.prisma.farm.findMany({
       where: type ? { type: type as never } : undefined,
       orderBy: { createdAt: 'asc' },
       include: INCLUDE,
     });
-    return rows.map(toFarm);
+    return rows.map((row) => toFarm(row, locale));
   }
 
-    async findOne(id: string): Promise<Farm> {
+    async findOne(id: string, locale: Locale = 'en'): Promise<Farm> {
     const row = await this.prisma.farm.findUnique({
       where: { id },
       include: INCLUDE,
     });
     if (!row) throw new NotFoundException(`Farm with id "${id}" not found`);
-    return toFarm(row);
+    return toFarm(row, locale);
   }
 
     async create(dto: CreateFarmDto): Promise<Farm> {
@@ -156,7 +170,7 @@ export class FarmsService {
     return this.findOne(row.id);
   }
 
-    async update(id: string, dto: UpdateFarmDto): Promise<Farm> {
+    async update(id: string, dto: UpdateFarmDto, locale: Locale = 'en'): Promise<Farm> {
     await this.findOne(id);
 
     // If products are being updated, replace the entire set
@@ -200,7 +214,7 @@ export class FarmsService {
       },
       include: INCLUDE,
     });
-    return toFarm(row);
+    return toFarm(row, locale);
   }
 
   async remove(id: string): Promise<void> {
@@ -209,14 +223,14 @@ export class FarmsService {
   }
 
         /** GET /farms/nearby — farms within `radius` km of the given coordinates */
-  async findNearby(lat: number, lng: number, radius = 25): Promise<FarmWithDistance[]> {
+  async findNearby(lat: number, lng: number, radius = 25, locale: Locale = 'en'): Promise<FarmWithDistance[]> {
     const rows = await this.prisma.farm.findMany({
       orderBy: { createdAt: 'asc' },
       include: INCLUDE,
     });
     return rows
       .map((row) => ({
-        ...toFarm(row),
+        ...toFarm(row, locale),
         distance: Math.round(haversineKm(lat, lng, row.lat, row.lng) * 10) / 10,
       }))
       .filter((f) => f.distance <= radius)
@@ -224,9 +238,9 @@ export class FarmsService {
   }
 
         /** GET /farms/search — full-text search on name and address */
-  async search(query: string): Promise<Farm[]> {
+  async search(query: string, locale: Locale = 'en'): Promise<Farm[]> {
     const q = query.trim().toLowerCase();
-    if (!q) return this.findAll();
+    if (!q) return this.findAll(undefined, locale);
     const rows = await this.prisma.farm.findMany({
       where: {
         OR: [
@@ -238,7 +252,7 @@ export class FarmsService {
       orderBy: { name: 'asc' },
       include: INCLUDE,
     });
-    return rows.map(toFarm);
+    return rows.map((row) => toFarm(row, locale));
   }
 
   /** GET /farms/types — list all available farm types */
@@ -255,5 +269,31 @@ export class FarmsService {
     });
     return rows.map((r) => r.canton);
   }
-}
 
+  /** DELETE /farms/:farmId/products/:productId — remove a product from a farm */
+  async removeProductFromFarm(farmId: string, productId: string, locale: Locale = 'en'): Promise<Farm> {
+    // Verify farm exists
+    await this.findOne(farmId);
+
+    // Delete the junction record
+    await this.prisma.farmProduct.delete({
+      where: {
+        farmId_productId: { farmId, productId },
+      },
+    });
+
+    return this.findOne(farmId, locale);
+  }
+
+  /** GET /products — list all available products */
+  async findAllProducts(locale: Locale = 'en'): Promise<{ id: string; name: string }[]> {
+    const products = await this.prisma.product.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return products.map((p) => ({
+      id: p.id,
+      name: translateProductName(p.name, locale),
+    }));
+  }
+}

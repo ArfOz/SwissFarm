@@ -9,11 +9,16 @@ export interface OpeningHourEntry {
   close: string | null;
 }
 
+export interface ProductInfo {
+  id: string;
+  name: string;
+}
+
 export interface Farm {
   id: string;
   name: string;
   type: 'milk' | 'self_service' | 'pick_your_own' | 'kids';
-  products: string[];
+  products: ProductInfo[];
   location: FarmLocation;
   address: string;
   canton: string;
@@ -25,7 +30,9 @@ export interface Farm {
 export type FarmType = Farm['type'];
 
 // DTOs for creating and updating farms — shared between backend and admin
-export type CreateFarmInput = Omit<Farm, 'id'>;
+export type CreateFarmInput = Omit<Farm, 'id' | 'products'> & {
+  products: string[];
+};
 
 export type UpdateFarmInput = Partial<CreateFarmInput>;
 

@@ -8,6 +8,12 @@ export interface DashboardStats {
   cantons: number;
 }
 
+export async function fetchProducts(): Promise<{ id: string; name: string }[]> {
+  const res = await fetch(`${API_URL}/farms/products`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to fetch products: ${res.statusText}`);
+  return res.json() as Promise<{ id: string; name: string }[]>;
+}
+
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const [farms, types, cantons] = await Promise.all([
     fetchFarms(),

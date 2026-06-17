@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Farm, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
+import { useState, useEffect } from 'react';
+import { Farm, ProductInfo, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
+import { fetchProducts } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 
 interface FarmFormModalProps {
@@ -22,21 +23,48 @@ const empty: CreateFarmInput = {
   openingHours: DEFAULT_OPENING_HOURS,
 };
 
+function farmToForm(farm: Farm): CreateFarmInput {
+  return {
+    name: farm.name,
+    type: farm.type,
+    products: farm.products.map((p) => p.name),
+    location: { ...farm.location },
+    address: farm.address,
+    canton: farm.canton,
+    website: farm.website ?? '',
+    isActive: farm.isActive,
+    openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS,
+  };
+}
+
 export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalProps) {
   const { t } = useI18n();
   const [form, setForm] = useState<CreateFarmInput>(
-    farm ? { ...empty, ...farm, openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS } : { ...empty },
+    farm ? farmToForm(farm) : { ...empty },
   );
-
-  const [productsInput, setProductsInput] = useState(
-    farm ? farm.products.join(', ') : '',
-  );
-
+  const [allProducts, setAllProducts] = useState<ProductInfo[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetchProducts()
+      .then(setAllProducts)
+      .catch(() => {}) // silently fail, fallback to text input
+      .finally(() => setLoadingProducts(false));
+  }, []);
+
   const set = (key: keyof CreateFarmInput, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const toggleProduct = (productName: string) => {
+    setForm((prev) => ({
+      ...prev,
+      products: prev.products.includes(productName)
+        ? prev.products.filter((p) => p !== productName)
+        : [...prev.products, productName],
+    }));
+  };
 
   const updateOpeningHour = (day: string, field: 'open' | 'close', value: string) => {
     setForm((prev) => ({
@@ -54,10 +82,6 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
     try {
       const data: CreateFarmInput = {
         ...form,
-        products: productsInput
-          .split(',')
-          .map((p) => p.trim())
-          .filter(Boolean),
         openingHours: (form.openingHours ?? DEFAULT_OPENING_HOURS).map((oh) => ({
           ...oh,
           open: oh.open || null,
@@ -74,7 +98,7 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
         <div className="bg-green-800 text-white px-6 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">
@@ -181,12 +205,44 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {t('farms.form.products')}
               </label>
-              <input
-                value={productsInput}
-                onChange={(e) => setProductsInput(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder={t('farms.form.placeholder.products')}
-              />
+              {loadingProducts ? (
+                <div className="text-sm text-gray-400 py-2">{t('common.loading') ?? 'Loading...'}</div>
+              ) : (
+                <div className="border border-gray-300 rounded-lg p-2 max-h-40 overflow-y-auto">
+                  {allProducts.length === 0 ? (
+                    <input
+                      value={form.products.join(', ')}
+                      onChange={(e) => set('products', e.target.value.split(',').map((p) => p.trim()).filter(Boolean))}
+                      className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder={t('farms.form.placeholder.products')}
+                    />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1">
+                      {allProducts.map((product) => {
+                        const isSelected = form.products.includes(product.name);
+                        return (
+                          <label
+                            key={product.id}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition-colors ${
+                              isSelected
+                                ? 'bg-green-100 text-green-800'
+                                : 'hover:bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleProduct(product.name)}
+                              className="rounded border-gray-300 text-green-700 focus:ring-green-500"
+                            />
+                            {product.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="col-span-2">

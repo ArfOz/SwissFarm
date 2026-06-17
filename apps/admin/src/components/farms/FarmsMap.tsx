@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Farm, FarmType } from '@swissfarm/types';
+import { useI18n } from '@/lib/i18n';
 
 // Fix Leaflet default icon paths broken by webpack/Next.js bundling
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
@@ -15,13 +17,6 @@ const TYPE_COLORS: Record<FarmType, string> = {
   self_service: '#f59e0b',
   pick_your_own: '#10b981',
   kids: '#ec4899',
-};
-
-const TYPE_LABELS: Record<FarmType, string> = {
-  milk: 'Milk Farm',
-  self_service: 'Self-Service',
-  pick_your_own: 'Pick Your Own',
-  kids: 'Kids Farm',
 };
 
 function createColoredIcon(color: string) {
@@ -45,6 +40,9 @@ interface FarmsMapProps {
 }
 
 export default function FarmsMap({ farms }: FarmsMapProps) {
+  const router = useRouter();
+  const { t, tps } = useI18n();
+
   useEffect(() => {
     // Patch default icon (fallback)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,33 +69,39 @@ export default function FarmsMap({ farms }: FarmsMapProps) {
           position={[farm.location.lat, farm.location.lng]}
           icon={createColoredIcon(TYPE_COLORS[farm.type])}
         >
-          <Popup minWidth={220}>
+          <Popup minWidth={260}>
             <div className="font-sans">
               <p className="font-bold text-base text-gray-900 mb-1">{farm.name}</p>
               <span
                 className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white mb-2"
                 style={{ backgroundColor: TYPE_COLORS[farm.type] }}
               >
-                {TYPE_LABELS[farm.type]}
+                {t(`type.${farm.type}`) || farm.type}
               </span>
-              <p className="text-xs text-gray-600 mb-1">📍 {farm.address}</p>
-              <p className="text-xs text-gray-600 mb-1">🏔 {farm.canton}</p>
-              {farm.openingHours && farm.openingHours.length > 0 && (
-                <p className="text-xs text-gray-600 mb-1">🕐 {farm.openingHours.length} entries</p>
-              )}
-              {farm.products.length > 0 && (
-                <p className="text-xs text-gray-500 mt-1">{farm.products.join(', ')}</p>
-              )}
-              {farm.website && (
-                <a
-                  href={farm.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:underline mt-1 block"
-                >
-                  🌐 Website
-                </a>
-              )}
+              <div className="space-y-1 text-xs text-gray-600">
+                <p>📍 {farm.address}</p>
+                <p>🏔 {farm.canton}</p>
+                <p>✅ {farm.isActive ? t('farms.active') : t('farms.passive')}</p>
+                {farm.products.length > 0 && (
+                  <p className="text-gray-500">📦 {tps(farm.products).join(', ')}</p>
+                )}
+                {farm.website && (
+                  <a
+                    href={farm.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline block"
+                  >
+                    🌐 {farm.website}
+                  </a>
+                )}
+              </div>
+              <button
+                onClick={() => router.push(`/farms/${farm.id}`)}
+                className="mt-2 w-full text-center text-xs font-medium text-white bg-green-700 hover:bg-green-800 rounded px-3 py-1.5 transition-colors"
+              >
+                {t('farms.viewDetails')}
+              </button>
             </div>
           </Popup>
         </Marker>
