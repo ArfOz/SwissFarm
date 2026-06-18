@@ -39,6 +39,17 @@ export function useI18n() {
 
 const UI_TRANSLATIONS: Record<Locale, Record<string, string>> = {
   en: {
+    'type.milk': 'Milk Farm',
+    'type.self_service': 'Self-Service',
+    'type.pick_your_own': 'Pick Your Own',
+    'type.kids': 'Kids Farm',
+    'day.monday': 'Monday',
+    'day.tuesday': 'Tuesday',
+    'day.wednesday': 'Wednesday',
+    'day.thursday': 'Thursday',
+    'day.friday': 'Friday',
+    'day.saturday': 'Saturday',
+    'day.sunday': 'Sunday',
     'farms.allTypes': 'All Types',
     'farms.newFarm': 'New Farm',
     'farms.editFarm': 'Edit Farm',
@@ -84,6 +95,17 @@ const UI_TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'common.language': 'Language',
   },
   de: {
+    'type.milk': 'Milchhof',
+    'type.self_service': 'Selbstbedienung',
+    'type.pick_your_own': 'Selbstpflücke',
+    'type.kids': 'Kinderbauernhof',
+    'day.monday': 'Montag',
+    'day.tuesday': 'Dienstag',
+    'day.wednesday': 'Mittwoch',
+    'day.thursday': 'Donnerstag',
+    'day.friday': 'Freitag',
+    'day.saturday': 'Samstag',
+    'day.sunday': 'Sonntag',
     'farms.allTypes': 'Alle Typen',
     'farms.newFarm': 'Neuer Hof',
     'farms.editFarm': 'Hof bearbeiten',
@@ -129,6 +151,17 @@ const UI_TRANSLATIONS: Record<Locale, Record<string, string>> = {
     'common.language': 'Sprache',
   },
   fr: {
+    'type.milk': 'Ferme laitière',
+    'type.self_service': 'Libre-service',
+    'type.pick_your_own': 'Auto-cueillette',
+    'type.kids': 'Ferme pour enfants',
+    'day.monday': 'Lundi',
+    'day.tuesday': 'Mardi',
+    'day.wednesday': 'Mercredi',
+    'day.thursday': 'Jeudi',
+    'day.friday': 'Vendredi',
+    'day.saturday': 'Samedi',
+    'day.sunday': 'Dimanche',
     'farms.allTypes': 'Tous les types',
     'farms.newFarm': 'Nouvelle ferme',
     'farms.editFarm': 'Modifier la ferme',
@@ -191,7 +224,7 @@ export function translate(
   dynamic: DynamicTranslations | null,
   params?: Record<string, string | number>,
 ): string {
-  // 1. Try dynamic translations first (farmTypes, days, products)
+  // 1. Try dynamic translations first (farmTypes, days, products from backend)
   if (dynamic) {
     const dynamicKey =
       key.startsWith('type.') || key.startsWith('day.') || key.startsWith('product.')
@@ -216,7 +249,7 @@ export function translate(
     }
   }
 
-  // 2. Fallback to static UI translations
+  // 2. Fallback to static UI translations (works offline too)
   const uiDict = UI_TRANSLATIONS[locale];
   let value = uiDict[key];
   if (value) return applyParams(value, params);

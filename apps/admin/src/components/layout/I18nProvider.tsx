@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, ReactNode } from 'react';
 import { ProductInfo } from '@swissfarm/types';
 import { I18nContext, Locale, DynamicTranslations, translate, translateProduct, translateProducts } from '@/lib/i18n';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3300/api';
 
 export default function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('en');

@@ -2,7 +2,7 @@ import { Farm } from '@swissfarm/types';
 import FarmsMapClient from '@/components/farms/FarmsMapClient';
 
 async function getFarms(): Promise<Farm[]> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3300';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330/api';
   const res = await fetch(`${apiUrl}/farms`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch farms: ${res.statusText}`);
   return res.json() as Promise<Farm[]>;
