@@ -27,9 +27,9 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   };
 }
 
-export async function fetchFarms(type?: FarmType): Promise<Farm[]> {
-  const url = type
-    ? `${API_URL}/farms?type=${encodeURIComponent(type)}`
+export async function fetchFarms(types?: FarmType[]): Promise<Farm[]> {
+  const url = types && types.length > 0
+    ? `${API_URL}/farms?types=${types.map(encodeURIComponent).join(',')}`
     : `${API_URL}/farms`;
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Failed to fetch farms: ${res.statusText}`);

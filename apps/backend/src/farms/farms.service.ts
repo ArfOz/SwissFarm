@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@swissfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFarmDto } from './dto/create-farm.dto';
-import { UpdateFarmDto } from './dto/update-farm.dto';
+import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
 import { productTranslations, Locale } from '../i18n/translations';
+import { PaymentMethod as PrismaPaymentMethod } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export interface FarmWithDistance extends Farm {
   distance: number; // km
@@ -35,7 +36,7 @@ function translateProductName(name: string, locale: Locale): string {
 type FarmRow = {
   id: string;
   name: string;
-  type: string;
+  types: { type: string }[];
   lat: number;
   lng: number;
   address: string;
@@ -43,14 +44,14 @@ type FarmRow = {
   phone?: string | null;
   website: string | null;
   isActive: boolean;
-  paymentMethods?: string[];
+  paymentMethods: { paymentMethod: PrismaPaymentMethod }[];
   openingHours: { openingHour: { id: string; day: string; open: string | null; close: string | null } }[];
   products: { product: { id: string; name: string } }[];
 };
 
 // Map Prisma DB row → shared Farm type
-function toFarm(row: FarmRow | any, locale: Locale = 'en'): Farm {
-  const openingHours: OpeningHourEntry[] = row.openingHours.map((oh) => ({
+function toFarm(row: any, locale: Locale = 'en'): Farm {
+  const openingHours: OpeningHourEntry[] = row.openingHours.map((oh: any) => ({
     day: oh.openingHour.day,
     open: oh.openingHour.open,
     close: oh.openingHour.close,
@@ -59,8 +60,8 @@ function toFarm(row: FarmRow | any, locale: Locale = 'en'): Farm {
   return {
     id: row.id,
     name: row.name,
-    type: (row.type || 'milk') as FarmType,
-    products: row.products.map((fp) => ({
+    types: (row.types?.map((t: any) => t.type) as FarmType[]) ?? [],
+    products: row.products.map((fp: any) => ({
       id: fp.product.id,
       name: translateProductName(fp.product.name, locale),
     })),
@@ -70,13 +71,15 @@ function toFarm(row: FarmRow | any, locale: Locale = 'en'): Farm {
     phone: row.phone ?? undefined,
     website: row.website ?? undefined,
     isActive: row.isActive,
-    paymentMethods: (row.paymentMethods as PaymentMethod[]) ?? [],
+    paymentMethods: (row.paymentMethods?.map((pm: any) => pm.paymentMethod) as PaymentMethod[]) ?? [],
     openingHours,
   };
 }
 
 /** Build the Prisma include needed for all queries */
 const INCLUDE = {
+  types: true,
+  paymentMethods: true,
   openingHours: { include: { openingHour: true } },
   products: { select: { product: { select: { id: true, name: true } } } },
 } as const;
@@ -121,9 +124,17 @@ async function upsertOpeningHour(
 export class FarmsService {
   constructor(private readonly prisma: PrismaService) {}
 
-        async findAll(type?: FarmType, locale: Locale = 'en'): Promise<Farm[]> {
+        async findAll(types?: FarmType[], locale: Locale = 'en'): Promise<Farm[]> {
+    const where: Prisma.FarmWhereInput = {};
+    if (types && types.length > 0) {
+      where.types = {
+        some: {
+          type: { in: types },
+        },
+      };
+    }
     const rows = await this.prisma.farm.findMany({
-      where: type ? { type: type as never } : undefined,
+      where,
       orderBy: { createdAt: 'asc' },
       include: INCLUDE,
     });
@@ -143,14 +154,22 @@ export class FarmsService {
     const row = await this.prisma.farm.create({
       data: {
         name: dto.name,
-        type: dto.type as FarmType,
         lat: dto.location.lat,
         lng: dto.location.lng,
         address: dto.address,
         canton: dto.canton,
         phone: dto.phone || null,
         website: dto.website || null,
-        paymentMethods: dto.paymentMethods ?? [],
+        types: {
+          create: (dto.types ?? []).map((type) => ({
+            type,
+          })),
+        },
+        paymentMethods: {
+          create: (dto.paymentMethods ?? []).map((method) => ({
+            paymentMethod: method as PrismaPaymentMethod,
+          })),
+        },
         products: {
           create: dto.products.map((name) => ({
             product: {
@@ -195,6 +214,17 @@ export class FarmsService {
       };
     }
 
+    // If types are being updated, replace the entire set
+    if (dto.types !== undefined) {
+      await this.prisma.farmType.deleteMany({ where: { farmId: id } });
+      await this.prisma.farmType.createMany({
+        data: dto.types.map((type) => ({
+          farmId: id,
+          type,
+        })),
+      });
+    }
+
     // If openingHours are being updated, replace the entire set
     if (dto.openingHours !== undefined) {
       await this.prisma.farmOpeningHour.deleteMany({ where: { farmId: id } });
@@ -203,11 +233,21 @@ export class FarmsService {
       }
     }
 
+    // If paymentMethods are being updated, replace the entire set
+    if (dto.paymentMethods !== undefined) {
+      await this.prisma.farmPaymentMethod.deleteMany({ where: { farmId: id } });
+      await this.prisma.farmPaymentMethod.createMany({
+        data: dto.paymentMethods.map((method) => ({
+          farmId: id,
+          paymentMethod: method as PrismaPaymentMethod,
+        })),
+      });
+    }
+
     const row = await this.prisma.farm.update({
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.type !== undefined && { type: dto.type as FarmType }),
         ...(dto.location !== undefined && {
           lat: dto.location.lat,
           lng: dto.location.lng,
@@ -217,7 +257,6 @@ export class FarmsService {
         ...(dto.phone !== undefined && { phone: dto.phone || null }),
         ...(dto.website !== undefined && { website: dto.website || null }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-        ...(dto.paymentMethods !== undefined && { paymentMethods: dto.paymentMethods }),
         ...(Object.keys(productUpdate).length > 0 && { products: productUpdate }),
       },
       include: INCLUDE,
@@ -246,7 +285,7 @@ export class FarmsService {
   }
 
         /** GET /farms/search — full-text search on name and address */
-  async search(query: string, locale: Locale = 'en'): Promise<Farm[]> {
+        async search(query: string, locale: Locale = 'en'): Promise<Farm[]> {
     const q = query.trim().toLowerCase();
     if (!q) return this.findAll(undefined, locale);
     const rows = await this.prisma.farm.findMany({

@@ -13,7 +13,7 @@ interface FarmFormModalProps {
 
 const empty: CreateFarmInput = {
   name: '',
-  type: 'milk',
+  types: ['milk'],
   products: [],
   location: { lat: 46.8182, lng: 8.2275 },
   address: '',
@@ -28,7 +28,7 @@ const empty: CreateFarmInput = {
 function farmToForm(farm: Farm): CreateFarmInput {
   return {
     name: farm.name,
-    type: farm.type,
+    types: farm.types.length > 0 ? farm.types : ['milk'],
     products: farm.products.map((p) => p.name),
     location: { ...farm.location },
     address: farm.address,
@@ -60,6 +60,15 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
   const set = (key: keyof CreateFarmInput, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const toggleType = (ft: FarmType) => {
+    setForm((prev) => ({
+      ...prev,
+      types: prev.types.includes(ft)
+        ? prev.types.filter((t) => t !== ft)
+        : [...prev.types, ft],
+    }));
+  };
 
   const togglePaymentMethod = (method: PaymentMethod) => {
     setForm((prev) => ({
@@ -143,17 +152,31 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('farms.form.type')}</label>
-              <select
-                value={form.type}
-                onChange={(e) => set('type', e.target.value as FarmType)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-              >
-                {FARM_TYPES.map((ft) => (
-                  <option key={ft} value={ft}>
-                    {t(`type.${ft}`)}
-                  </option>
-                ))}
-              </select>
+              <div className="border border-gray-300 rounded-lg p-2">
+                <div className="grid grid-cols-2 gap-1">
+                  {FARM_TYPES.map((ft) => {
+                    const isSelected = form.types.includes(ft);
+                    return (
+                      <label
+                        key={ft}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition-colors ${
+                          isSelected
+                            ? 'bg-green-100 text-green-800'
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleType(ft)}
+                          className="rounded border-gray-300 text-green-700 focus:ring-green-500"
+                        />
+                        {t(`type.${ft}`)}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div>

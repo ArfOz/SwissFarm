@@ -9,13 +9,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum FarmType {
-  milk
-  self_service
-  pick_your_own
-  kids
-}
-
 enum PaymentMethod {
   twint
   cash
@@ -26,7 +19,6 @@ enum PaymentMethod {
 model Farm {
   id           String            @id @default(cuid())
   name         String
-  type         FarmType          @default(milk)
   lat          Float
   lng          Float
   address      String
@@ -36,11 +28,22 @@ model Farm {
   openingHours FarmOpeningHour[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
-  isActive        Boolean         @default(true)
-  paymentMethods  PaymentMethod[]
+  isActive     Boolean           @default(true)
 
-  products  FarmProduct[]
-  activities FarmActivity[]
+  types           FarmType[]
+  products        FarmProduct[]
+  paymentMethods  FarmPaymentMethod[]
+  activities      FarmActivity[]
+}
+
+model FarmType {
+  farmId String
+  type   String
+
+  farm Farm @relation(fields: [farmId], references: [id])
+
+  @@id([farmId, type])
+  @@map("farm_types")
 }
 
 model Product {
@@ -84,6 +87,16 @@ model Admin {
   role      String   @default("admin")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model FarmPaymentMethod {
+  farmId         String
+  paymentMethod  PaymentMethod
+
+  farm Farm @relation(fields: [farmId], references: [id])
+
+  @@id([farmId, paymentMethod])
+  @@map("farm_payment_methods")
 }
 
 model Activity {

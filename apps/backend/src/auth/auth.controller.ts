@@ -1,7 +1,7 @@
 import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { Public } from '../libs/decorators/public.decorator';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
+import { CreateAdminDto, LoginDto } from '@swissfarm/dto';
 
 @Controller('auth')
 export class AuthController {
@@ -10,8 +10,8 @@ export class AuthController {
   @Public()
   @Post('create-admin')
   @HttpCode(HttpStatus.CREATED)
-  async createAdmin(@Body() body: { apiKey: string; email: string; password: string }) {
-    return this.authService.createAdmin(body.apiKey, body.email, body.password);
+  async createAdmin(@Body() dto: CreateAdminDto) {
+    return this.authService.createAdmin(dto.apiKey, dto.email, dto.password);
   }
 
   @Public()

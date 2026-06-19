@@ -14,8 +14,7 @@ import { Farm, FarmType } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
 import { Public } from '../libs/decorators/public.decorator';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
-import { CreateFarmDto } from './dto/create-farm.dto';
-import { UpdateFarmDto } from './dto/update-farm.dto';
+import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
 import { FarmsService, FarmWithDistance } from './farms.service';
 
 @Controller('farms')
@@ -73,10 +72,13 @@ export class FarmsController {
   @Public()
   @Get()
   findAll(
-    @Query('type') type?: FarmType,
+    @Query('types') types?: string,
     @Query('locale') locale?: string,
   ): Promise<Farm[]> {
-    return this.farmsService.findAll(type, (locale as Locale) ?? 'en');
+    const parsedTypes = types
+      ? (types.split(',').map((t) => t.trim()) as FarmType[])
+      : undefined;
+    return this.farmsService.findAll(parsedTypes, (locale as Locale) ?? 'en');
   }
 
   @Public()

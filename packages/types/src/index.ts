@@ -19,7 +19,7 @@ export type PaymentMethod = 'twint' | 'cash' | 'credit_card' | 'invoice';
 export interface Farm {
   id: string;
   name: string;
-  type: 'milk' | 'self_service' | 'pick_your_own' | 'kids';
+  types: FarmType[];
   products: ProductInfo[];
   location: FarmLocation;
   address: string;
@@ -31,7 +31,7 @@ export interface Farm {
   openingHours?: OpeningHourEntry[];
 }
 
-export type FarmType = Farm['type'];
+export type FarmType = 'milk' | 'self_service' | 'pick_your_own' | 'kids';
 
 // DTOs for creating and updating farms — shared between backend and admin
 export type CreateFarmInput = Omit<Farm, 'id' | 'products'> & {

@@ -21,6 +21,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; farm?: Farm } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleTypeChange = (type: string) => {
     router.push(type ? `/farms?type=${type}` : '/farms');
@@ -48,11 +49,23 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
   };
 
   const allDisplayed = useMemo(
-    () =>
-      selectedType
-        ? farms.filter((f) => f.type === selectedType)
-        : farms,
-    [farms, selectedType]
+    () => {
+      let filtered = selectedType
+        ? farms.filter((f) => f.types.includes(selectedType as FarmType))
+        : farms;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        filtered = filtered.filter((f) =>
+          f.name.toLowerCase().includes(q) ||
+          f.address.toLowerCase().includes(q) ||
+          f.canton.toLowerCase().includes(q)
+        );
+      }
+
+      return filtered;
+    },
+    [farms, selectedType, searchQuery]
   );
 
   const totalPages = Math.max(1, Math.ceil(allDisplayed.length / PAGE_SIZE));
@@ -101,6 +114,17 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
               ))}
             </select>
           </div>
+
+          <div className="flex-1 max-w-xs">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              placeholder="Search by name, address or canton..."
+              className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+          </div>
+
           <button
             onClick={() => setModal({ mode: 'create' })}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-lg hover:bg-green-800 transition-colors"
@@ -148,7 +172,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                       )}
                     </td>
                     <td className="px-5 py-4 text-gray-700 font-medium">
-                      {t(`type.${farm.type}`) || farm.type || '—'}
+                      {farm.types.map((ft) => t(`type.${ft}`)).join(', ') || '—'}
                     </td>
                     <td className="px-5 py-4 text-gray-600 font-medium">{farm.canton}</td>
                     <td className="px-5 py-4 text-gray-600 max-w-xs">{farm.address}</td>

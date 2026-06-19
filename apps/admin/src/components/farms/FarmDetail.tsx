@@ -51,7 +51,7 @@ export default function FarmDetail({ farm: initialFarm }: FarmDetailProps) {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{farm.name}</h1>
-            <span className="text-sm text-gray-500">{t(`type.${farm.type}`) || farm.type}</span>
+            <span className="text-sm text-gray-500">{farm.types.map((ft) => t(`type.${ft}`)).join(', ')}</span>
           </div>
           <div className="flex items-center gap-2">
             <span

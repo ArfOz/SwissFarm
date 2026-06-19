@@ -1,9 +1,11 @@
 import { Farm } from '@swissfarm/types';
 import FarmsTable from '@/components/farms/FarmsTable';
 
-async function getFarms(type?: string): Promise<Farm[]> {
+async function getFarms(types?: string): Promise<Farm[]> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330/api';
-  const url = type ? `${apiUrl}/farms?type=${encodeURIComponent(type)}` : `${apiUrl}/farms`;
+  const url = types
+    ? `${apiUrl}/farms?types=${encodeURIComponent(types)}`
+    : `${apiUrl}/farms`;
 
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) {
@@ -13,11 +15,11 @@ async function getFarms(type?: string): Promise<Farm[]> {
 }
 
 interface FarmsPageProps {
-  searchParams: { type?: string };
+  searchParams: { types?: string };
 }
 
 export default async function FarmsPage({ searchParams }: FarmsPageProps) {
-  const farms = await getFarms(searchParams.type);
+  const farms = await getFarms(searchParams.types);
 
   return (
     <div>
@@ -27,7 +29,7 @@ export default async function FarmsPage({ searchParams }: FarmsPageProps) {
           {farms.length} farm{farms.length !== 1 ? 's' : ''}
         </span>
       </div>
-      <FarmsTable farms={farms} selectedType={searchParams.type} />
+      <FarmsTable farms={farms} selectedType={searchParams.types} />
     </div>
   );
 }
