@@ -23,25 +23,25 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@swissfarm'
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build types package
-        run: npm run build
-        working-directory: packages/types
+        run: pnpm --filter @swissfarm/types build
 
       - name: Build dto package
-        run: npm run build
-        working-directory: packages/dto
+        run: pnpm --filter @swissfarm/dto build
 
       - name: Publish @swissfarm/types
-        run: npm publish
-        working-directory: packages/types
+        run: pnpm --filter @swissfarm/types publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish @swissfarm/dto
-        run: npm publish
-        working-directory: packages/dto
+        run: pnpm --filter @swissfarm/dto publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
