@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish:
+  publish-types:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,19 +21,36 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@swissfarm'
 
-      - name: Install dependencies & build
+      - name: Build & publish @swissfarm/types
         run: |
-          cd packages/types && npm install && npm run build
-          cd ../dto && npm install && npm run build
-
-      - name: Publish @swissfarm/types
-        run: npm publish
-        working-directory: packages/types
+          cd packages/types
+          npm install
+          npm run build
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish @swissfarm/dto
-        run: npm publish
-        working-directory: packages/dto
+  publish-dto:
+    needs: [publish-types]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@swissfarm'
+
+      - name: Build & publish @swissfarm/dto
+        run: |
+          cd packages/dto
+          npm install
+          npm run build
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
