@@ -13,7 +13,6 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // If endpoint is not admin-only, allow access
     if (!adminOnly) {
       return true;
     }
@@ -21,7 +20,6 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    // JwtStrategy validates and attaches user to request
     if (!user) {
       return false;
     }

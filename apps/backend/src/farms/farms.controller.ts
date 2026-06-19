@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { Farm, FarmType } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
-import { Public } from '../auth/public.decorator';
-import { AdminOnly } from '../auth/admin-only.decorator';
+import { Public } from '../libs/decorators/public.decorator';
+import { AdminOnly } from '../libs/decorators/admin-only.decorator';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
 import { FarmsService, FarmWithDistance } from './farms.service';

@@ -24,6 +24,7 @@ model Farm {
   lng          Float
   address      String
   canton       String
+  phone        String?
   website      String?
   openingHours FarmOpeningHour[]
   createdAt    DateTime          @default(now())

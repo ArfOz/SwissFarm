@@ -91,6 +91,13 @@ export default function FarmDetail({ farm: initialFarm }: FarmDetailProps) {
               </p>
             </div>
 
+            {farm.phone && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase">Phone</label>
+                <p className="text-sm text-gray-900 mt-0.5">{farm.phone}</p>
+              </div>
+            )}
+
             {farm.website && (
               <div>
                 <label className="block text-xs font-medium text-gray-500 uppercase">{t('farms.form.website')}</label>

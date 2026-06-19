@@ -40,6 +40,7 @@ type FarmRow = {
   lng: number;
   address: string;
   canton: string;
+  phone?: string | null;
   website: string | null;
   isActive: boolean;
   openingHours: { openingHour: { id: string; day: string; open: string | null; close: string | null } }[];
@@ -65,6 +66,7 @@ function toFarm(row: FarmRow, locale: Locale = 'en'): Farm {
     location: { lat: row.lat, lng: row.lng },
     address: row.address,
     canton: row.canton,
+    phone: row.phone ?? undefined,
     website: row.website ?? undefined,
     isActive: row.isActive,
     openingHours,
@@ -144,6 +146,7 @@ export class FarmsService {
         lng: dto.location.lng,
         address: dto.address,
         canton: dto.canton,
+        phone: dto.phone || null,
         website: dto.website || null,
         products: {
           create: dto.products.map((name) => ({
@@ -208,6 +211,7 @@ export class FarmsService {
         }),
         ...(dto.address !== undefined && { address: dto.address }),
         ...(dto.canton !== undefined && { canton: dto.canton }),
+        ...(dto.phone !== undefined && { phone: dto.phone || null }),
         ...(dto.website !== undefined && { website: dto.website || null }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         ...(Object.keys(productUpdate).length > 0 && { products: productUpdate }),

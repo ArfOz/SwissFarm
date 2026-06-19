@@ -67,6 +67,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
     t('farms.type'),
     t('farms.canton'),
     t('farms.address'),
+    'Phone',
     t('farms.products'),
     t('farms.status'),
     '',
@@ -126,7 +127,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedFarms.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-gray-400">
+                  <td colSpan={8} className="px-5 py-10 text-center text-gray-400">
                     {t('farms.noFarms')}
                   </td>
                 </tr>
@@ -151,6 +152,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                     </td>
                     <td className="px-5 py-4 text-gray-600 font-medium">{farm.canton}</td>
                     <td className="px-5 py-4 text-gray-600 max-w-xs">{farm.address}</td>
+                    <td className="px-5 py-4 text-gray-600">{farm.phone || '—'}</td>
                     <td className="px-5 py-4 text-gray-600">{tps(farm.products).join(', ')}</td>
                     <td className="px-5 py-4">
                       {farm.isActive ? (

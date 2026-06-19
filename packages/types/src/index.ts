@@ -22,6 +22,7 @@ export interface Farm {
   location: FarmLocation;
   address: string;
   canton: string;
+  phone?: string;
   website?: string;
   isActive: boolean;
   openingHours?: OpeningHourEntry[];

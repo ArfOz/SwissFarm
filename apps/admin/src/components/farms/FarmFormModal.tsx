@@ -18,6 +18,7 @@ const empty: CreateFarmInput = {
   location: { lat: 46.8182, lng: 8.2275 },
   address: '',
   canton: '',
+  phone: '',
   website: '',
   isActive: true,
   openingHours: DEFAULT_OPENING_HOURS,
@@ -31,6 +32,7 @@ function farmToForm(farm: Farm): CreateFarmInput {
     location: { ...farm.location },
     address: farm.address,
     canton: farm.canton,
+    phone: farm.phone ?? '',
     website: farm.website ?? '',
     isActive: farm.isActive,
     openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS,
@@ -243,6 +245,17 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                   )}
                 </div>
               )}
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+              <input
+                value={form.phone ?? ''}
+                onChange={(e) => set('phone', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                placeholder="+41 00 000 00 00"
+                type="tel"
+              />
             </div>
 
             <div className="col-span-2">

@@ -10,10 +10,11 @@ export const FARMS_DATA: Farm[] = [
       { id: 'cheese', name: 'cheese' },
       { id: 'butter', name: 'butter' },
       { id: 'yogurt', name: 'yogurt' },
-    ],
+    ], 
     location: { lat: 47.3769, lng: 8.5417 },
     address: 'Hofmattstrasse 12, 8001 Zürich',
     canton: 'ZH',
+    phone: '+41 44 123 45 67',
     website: 'https://hofmatt.ch',
     isActive: true,
     openingHours: [
@@ -38,6 +39,7 @@ export const FARMS_DATA: Farm[] = [
     location: { lat: 47.0502, lng: 8.3093 },
     address: 'Bergstrasse 45, 6003 Luzern',
     canton: 'LU',
+    phone: '+41 41 234 56 78',
     isActive: true,
     openingHours: [],
   },
@@ -54,6 +56,7 @@ export const FARMS_DATA: Farm[] = [
     location: { lat: 47.5596, lng: 7.5886 },
     address: 'Obstweg 8, 4001 Basel',
     canton: 'BS',
+    phone: '+41 61 345 67 89',
     website: 'https://obstgarten-mueller.ch',
     isActive: true,
     openingHours: [
@@ -78,6 +81,7 @@ export const FARMS_DATA: Farm[] = [
     location: { lat: 46.948, lng: 7.4474 },
     address: 'Sonnenhang 3, 3001 Bern',
     canton: 'BE',
+    phone: '+41 31 456 78 90',
     website: 'https://kinderbauernhof-sonnenschein.ch',
     isActive: true,
     openingHours: [
@@ -102,6 +106,7 @@ export const FARMS_DATA: Farm[] = [
     location: { lat: 46.5858, lng: 7.0793 },
     address: "Route de l'Alpage 1, 1663 Gruyères",
     canton: 'FR',
+    phone: '+41 26 567 89 01',
     website: 'https://alpage-gruyeres.ch',
     isActive: true,
     openingHours: [

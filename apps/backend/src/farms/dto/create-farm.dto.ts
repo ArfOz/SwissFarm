@@ -7,6 +7,7 @@ export class CreateFarmDto implements CreateFarmInput {
   location!: { lat: number; lng: number };
   address!: string;
   canton!: string;
+  phone?: string;
   website?: string;
   isActive!: boolean;
   openingHours?: CreateFarmInput['openingHours'];
