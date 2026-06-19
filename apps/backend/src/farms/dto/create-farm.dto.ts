@@ -10,5 +10,6 @@ export class CreateFarmDto implements CreateFarmInput {
   phone?: string;
   website?: string;
   isActive!: boolean;
+  paymentMethods!: CreateFarmInput['paymentMethods'];
   openingHours?: CreateFarmInput['openingHours'];
 }

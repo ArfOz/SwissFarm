@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Farm, DAYS, CreateFarmInput } from '@swissfarm/types';
+import { Farm, DAYS, CreateFarmInput, PAYMENT_METHOD_LABELS } from '@swissfarm/types';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n';
 import { updateFarm } from '@/lib/api';
@@ -90,6 +90,22 @@ export default function FarmDetail({ farm: initialFarm }: FarmDetailProps) {
                 {farm.location.lat.toFixed(4)}, {farm.location.lng.toFixed(4)}
               </p>
             </div>
+
+            {farm.paymentMethods && farm.paymentMethods.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase">Payment Methods</label>
+                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  {farm.paymentMethods.map((pm) => (
+                    <span
+                      key={pm}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                    >
+                      {t(`payment.${pm}`) || PAYMENT_METHOD_LABELS[pm] || pm}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {farm.phone && (
               <div>

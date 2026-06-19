@@ -8,6 +8,15 @@ export const LOCALE_LABELS: Record<Locale, string> = {
   fr: 'Français',
 };
 
+// ── Payment Methods ──────────────────────────────────────────────────────────
+
+export const paymentMethodTranslations: Record<string, Record<Locale, string>> = {
+  twint:        { en: 'TWINT',              de: 'TWINT',               fr: 'TWINT' },
+  cash:         { en: 'Cash',               de: 'Bar',                 fr: 'Espèces' },
+  credit_card:  { en: 'Credit Card',        de: 'Kreditkarte',         fr: 'Carte de crédit' },
+  invoice:      { en: 'Invoice',            de: 'Rechnung',            fr: 'Facture' },
+};
+
 // ── Farm Types ────────────────────────────────────────────────────────────────
 
 export const farmTypeTranslations: Record<string, Record<Locale, string>> = {
@@ -159,6 +168,9 @@ export function getTranslations(locale: Locale) {
   }
   for (const [key, value] of Object.entries(productTranslations)) {
     ui[`product.${key}`] = value[locale];
+  }
+  for (const [key, value] of Object.entries(paymentMethodTranslations)) {
+    ui[`payment.${key}`] = value[locale];
   }
 
   return { farmTypes, days, ui };

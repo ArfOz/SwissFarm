@@ -16,6 +16,13 @@ enum FarmType {
   kids
 }
 
+enum PaymentMethod {
+  twint
+  cash
+  credit_card
+  invoice
+}
+
 model Farm {
   id           String            @id @default(cuid())
   name         String
@@ -29,7 +36,8 @@ model Farm {
   openingHours FarmOpeningHour[]
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
-  isActive     Boolean           @default(true)
+  isActive        Boolean         @default(true)
+  paymentMethods  PaymentMethod[]
 
   products  FarmProduct[]
   activities FarmActivity[]

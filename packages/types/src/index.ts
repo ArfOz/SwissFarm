@@ -14,6 +14,8 @@ export interface ProductInfo {
   name: string;
 }
 
+export type PaymentMethod = 'twint' | 'cash' | 'credit_card' | 'invoice';
+
 export interface Farm {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ export interface Farm {
   phone?: string;
   website?: string;
   isActive: boolean;
+  paymentMethods: PaymentMethod[];
   openingHours?: OpeningHourEntry[];
 }
 
@@ -36,6 +39,15 @@ export type CreateFarmInput = Omit<Farm, 'id' | 'products'> & {
 };
 
 export type UpdateFarmInput = Partial<CreateFarmInput>;
+
+export const PAYMENT_METHODS: PaymentMethod[] = ['twint', 'cash', 'credit_card', 'invoice'];
+
+export const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  twint: 'TWINT',
+  cash: 'Cash',
+  credit_card: 'Credit Card',
+  invoice: 'Invoice',
+};
 
 export const FARM_TYPES: FarmType[] = ['milk', 'self_service', 'pick_your_own', 'kids'];
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Farm, ProductInfo, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS } from '@swissfarm/types';
+import { Farm, PaymentMethod, ProductInfo, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@swissfarm/types';
 import { fetchProducts } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 
@@ -21,6 +21,7 @@ const empty: CreateFarmInput = {
   phone: '',
   website: '',
   isActive: true,
+  paymentMethods: [],
   openingHours: DEFAULT_OPENING_HOURS,
 };
 
@@ -35,6 +36,7 @@ function farmToForm(farm: Farm): CreateFarmInput {
     phone: farm.phone ?? '',
     website: farm.website ?? '',
     isActive: farm.isActive,
+    paymentMethods: farm.paymentMethods,
     openingHours: farm.openingHours ?? DEFAULT_OPENING_HOURS,
   };
 }
@@ -58,6 +60,15 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
 
   const set = (key: keyof CreateFarmInput, value: unknown) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const togglePaymentMethod = (method: PaymentMethod) => {
+    setForm((prev) => ({
+      ...prev,
+      paymentMethods: prev.paymentMethods.includes(method)
+        ? prev.paymentMethods.filter((m) => m !== method)
+        : [...prev.paymentMethods, method],
+    }));
+  };
 
   const toggleProduct = (productName: string) => {
     setForm((prev) => ({
@@ -245,6 +256,35 @@ export default function FarmFormModal({ farm, onClose, onSave }: FarmFormModalPr
                   )}
                 </div>
               )}
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Methods</label>
+              <div className="border border-gray-300 rounded-lg p-2">
+                <div className="grid grid-cols-2 gap-1">
+                  {PAYMENT_METHODS.map((method) => {
+                    const isSelected = form.paymentMethods.includes(method);
+                    return (
+                      <label
+                        key={method}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition-colors ${
+                          isSelected
+                            ? 'bg-green-100 text-green-800'
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => togglePaymentMethod(method)}
+                          className="rounded border-gray-300 text-green-700 focus:ring-green-500"
+                        />
+                        {PAYMENT_METHOD_LABELS[method]}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="col-span-2">

@@ -10,5 +10,6 @@ export class UpdateFarmDto implements UpdateFarmInput {
   phone?: string;
   website?: string;
   isActive?: boolean;
+  paymentMethods?: UpdateFarmInput['paymentMethods'];
   openingHours?: UpdateFarmInput['openingHours'];
 }

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Farm, FarmType, FARM_TYPES, OpeningHourEntry } from '@swissfarm/types';
+import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@swissfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
@@ -43,12 +43,13 @@ type FarmRow = {
   phone?: string | null;
   website: string | null;
   isActive: boolean;
+  paymentMethods?: string[];
   openingHours: { openingHour: { id: string; day: string; open: string | null; close: string | null } }[];
   products: { product: { id: string; name: string } }[];
 };
 
 // Map Prisma DB row → shared Farm type
-function toFarm(row: FarmRow, locale: Locale = 'en'): Farm {
+function toFarm(row: FarmRow | any, locale: Locale = 'en'): Farm {
   const openingHours: OpeningHourEntry[] = row.openingHours.map((oh) => ({
     day: oh.openingHour.day,
     open: oh.openingHour.open,
@@ -69,6 +70,7 @@ function toFarm(row: FarmRow, locale: Locale = 'en'): Farm {
     phone: row.phone ?? undefined,
     website: row.website ?? undefined,
     isActive: row.isActive,
+    paymentMethods: (row.paymentMethods as PaymentMethod[]) ?? [],
     openingHours,
   };
 }
@@ -148,6 +150,7 @@ export class FarmsService {
         canton: dto.canton,
         phone: dto.phone || null,
         website: dto.website || null,
+        paymentMethods: dto.paymentMethods ?? [],
         products: {
           create: dto.products.map((name) => ({
             product: {
@@ -214,6 +217,7 @@ export class FarmsService {
         ...(dto.phone !== undefined && { phone: dto.phone || null }),
         ...(dto.website !== undefined && { website: dto.website || null }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+        ...(dto.paymentMethods !== undefined && { paymentMethods: dto.paymentMethods }),
         ...(Object.keys(productUpdate).length > 0 && { products: productUpdate }),
       },
       include: INCLUDE,

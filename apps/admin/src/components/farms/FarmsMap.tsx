@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import { Farm, FarmType } from '@swissfarm/types';
 import { useI18n } from '@/lib/i18n';
 
-// Fix Leaflet default icon paths broken by webpack/Next.js bundling
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
 const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
 const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
@@ -42,70 +40,72 @@ interface FarmsMapProps {
 export default function FarmsMap({ farms }: FarmsMapProps) {
   const router = useRouter();
   const { t, tps } = useI18n();
+  const mapRef = useRef<L.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Patch default icon (fallback)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!containerRef.current) return;
+
+    // Patch default icon
     delete (L.Icon.Default.prototype as any)._getIconUrl;
     L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl });
-  }, []);
 
-  // Center on Switzerland
-  const center: [number, number] = [46.8182, 8.2275];
+    // Initialize map
+    const map = L.map(containerRef.current, {
+      center: [46.8182, 8.2275],
+      zoom: 8,
+      zoomControl: true,
+    });
 
-  return (
-    <MapContainer
-      center={center}
-      zoom={8}
-      style={{ height: '100%', width: '100%', borderRadius: '0.5rem' }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      {farms.map((farm) => (
-        <Marker
-          key={farm.id}
-          position={[farm.location.lat, farm.location.lng]}
-          icon={createColoredIcon(TYPE_COLORS[farm.type])}
-        >
-          <Popup minWidth={260}>
-            <div className="font-sans">
-              <p className="font-bold text-base text-gray-900 mb-1">{farm.name}</p>
-              <span
-                className="inline-block px-2 py-0.5 rounded text-xs font-medium text-white mb-2"
-                style={{ backgroundColor: TYPE_COLORS[farm.type] }}
-              >
-                {t(`type.${farm.type}`) || farm.type}
-              </span>
-              <div className="space-y-1 text-xs text-gray-600">
-                <p>📍 {farm.address}</p>
-                <p>🏔 {farm.canton}</p>
-                <p>✅ {farm.isActive ? t('farms.active') : t('farms.passive')}</p>
-                {farm.products.length > 0 && (
-                  <p className="text-gray-500">📦 {tps(farm.products).join(', ')}</p>
-                )}
-                {farm.website && (
-                  <a
-                    href={farm.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline block"
-                  >
-                    🌐 {farm.website}
-                  </a>
-                )}
-              </div>
-              <button
-                onClick={() => router.push(`/farms/${farm.id}`)}
-                className="mt-2 w-full text-center text-xs font-medium text-white bg-green-700 hover:bg-green-800 rounded px-3 py-1.5 transition-colors"
-              >
-                {t('farms.viewDetails')}
-              </button>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
-  );
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    // Add markers
+    farms.forEach((farm) => {
+      const marker = L.marker([farm.location.lat, farm.location.lng], {
+        icon: createColoredIcon(TYPE_COLORS[farm.type]),
+      }).addTo(map);
+
+      const popupContent = document.createElement('div');
+      popupContent.className = 'font-sans';
+      popupContent.innerHTML = `
+        <p class="font-bold text-base text-gray-900 mb-1">${farm.name}</p>
+        <span class="inline-block px-2 py-0.5 rounded text-xs font-medium text-white mb-2" style="background-color: ${TYPE_COLORS[farm.type]}">
+          ${t(`type.${farm.type}`) || farm.type}
+        </span>
+        <div class="space-y-1 text-xs text-gray-600">
+          <p>📍 ${farm.address}</p>
+          <p>🏔 ${farm.canton}</p>
+          <p>✅ ${farm.isActive ? t('farms.active') : t('farms.passive')}</p>
+          ${farm.products.length > 0 ? `<p class="text-gray-500">📦 ${tps(farm.products).join(', ')}</p>` : ''}
+          ${farm.website ? `<a href="${farm.website}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline block">🌐 ${farm.website}</a>` : ''}
+        </div>
+        <button class="mt-2 w-full text-center text-xs font-medium text-white bg-green-700 hover:bg-green-800 rounded px-3 py-1.5 transition-colors" data-farm-id="${farm.id}">
+          ${t('farms.viewDetails') || 'View Details'}
+        </button>
+      `;
+
+      marker.bindPopup(popupContent);
+
+      marker.on('popupopen', () => {
+        const btn = popupContent.querySelector('[data-farm-id]');
+        if (btn) {
+          btn.addEventListener('click', () => {
+            router.push(`/farms/${farm.id}`);
+          });
+        }
+      });
+    });
+
+    mapRef.current = map;
+
+    // Cleanup on unmount
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [farms, router, t, tps]);
+
+  return <div ref={containerRef} style={{ height: '100%', width: '100%', borderRadius: '0.5rem' }} />;
 }
