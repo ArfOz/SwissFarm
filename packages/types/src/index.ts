@@ -112,3 +112,4 @@ export const CANTON_LABELS: Record<string, string> = {
   ZG: 'Zug',
   ZH: 'Zürich',
 };
+// version bump for GitHub Packages
