@@ -2,17 +2,27 @@
   "name": "@swissfarm/dto",
   "version": "0.0.1",
   "private": false,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "prepublishOnly": "tsc"
   },
   "dependencies": {
-    "@swissfarm/types": "workspace:*"
+    "@swissfarm/types": "0.0.1"
   },
   "devDependencies": {
     "typescript": "^5.5.0"
