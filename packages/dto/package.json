@@ -22,7 +22,7 @@
     "prepublishOnly": "tsc"
   },
   "dependencies": {
-    "@swissfarm/types": "workspace:*"
+    "@swissfarm/types": "0.0.1"
   },
   "devDependencies": {
     "typescript": "^5.5.0"
