@@ -5,8 +5,10 @@
   "scripts": {
     "dev:backend": "pnpm --filter backend dev",
     "dev:admin": "pnpm --filter admin dev",
+    "dev:mobile": "pnpm --filter mobile start",
     "build:backend": "pnpm --filter backend build",
     "build:admin": "pnpm --filter admin build",
+    "build:mobile": "pnpm --filter mobile expo export",
     "build:packages": "pnpm --filter './packages/**' build",
     "lint": "pnpm -r lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,json}\" --ignore-path .gitignore"

@@ -82,6 +82,11 @@ export const CANTONS = [
   'TI', 'UR', 'VD', 'VS', 'ZG', 'ZH',
 ] as const;
 
+export interface FarmWithDistance extends Farm {
+  /** Straight-line distance in km from the query coordinates */
+  distance: number;
+}
+
 export type Canton = (typeof CANTONS)[number];
 
 export const CANTON_LABELS: Record<string, string> = {
