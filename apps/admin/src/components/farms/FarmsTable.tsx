@@ -1,11 +1,12 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Farm, FarmType, CreateFarmInput, FARM_TYPES } from '@swissfarm/types';
 import { createFarm, deleteFarm, updateFarm } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import FarmFormModal from './FarmFormModal';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3330/api';
 
 const PAGE_SIZE = 8;
 
@@ -14,17 +15,47 @@ interface FarmsTableProps {
   selectedType?: string;
 }
 
-export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsTableProps) {
-  const router = useRouter();
+export default function FarmsTable({ farms: initialFarms, selectedType: initialType }: FarmsTableProps) {
   const { t, tps } = useI18n();
   const [farms, setFarms] = useState<Farm[]>(initialFarms);
+  const [localType, setLocalType] = useState(initialType ?? '');
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; farm?: Farm } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showBrokenLocation, setShowBrokenLocation] = useState(false);
+  const [productFilter, setProductFilter] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Fetch filtered farms from backend on filter change
+  useEffect(() => {
+    const fetchFiltered = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/farms/filter`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            types: localType ? [localType as FarmType] : undefined,
+            brokenLocation: showBrokenLocation || undefined,
+            productNames: productFilter.trim() ? productFilter.trim().split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFarms(data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFiltered();
+  }, [localType, showBrokenLocation, productFilter]);
 
   const handleTypeChange = (type: string) => {
-    router.push(type ? `/farms?type=${type}` : '/farms');
+    setLocalType(type);
+    setCurrentPage(1);
   };
 
   const handleSave = async (data: CreateFarmInput) => {
@@ -50,9 +81,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
 
   const allDisplayed = useMemo(
     () => {
-      let filtered = selectedType
-        ? farms.filter((f) => f.types.includes(selectedType as FarmType))
-        : farms;
+      let filtered = farms;
 
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
@@ -65,7 +94,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
 
       return filtered;
     },
-    [farms, selectedType, searchQuery]
+    [farms, searchQuery]
   );
 
   const totalPages = Math.max(1, Math.ceil(allDisplayed.length / PAGE_SIZE));
@@ -102,7 +131,7 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
           <div className="flex items-center gap-4">
             <label className="text-sm font-medium text-gray-700">{t('farms.type')}:</label>
             <select
-              value={selectedType ?? ''}
+              value={localType}
               onChange={(e) => handleTypeChange(e.target.value)}
               className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
             >
@@ -113,6 +142,26 @@ export default function FarmsTable({ farms: initialFarms, selectedType }: FarmsT
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showBrokenLocation}
+                onChange={(e) => { setShowBrokenLocation(e.target.checked); setCurrentPage(1); }}
+                className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+              />
+              <span className="text-xs text-red-600 font-medium">Broken Location</span>
+            </label>
+
+            <input
+              type="text"
+              value={productFilter}
+              onChange={(e) => { setProductFilter(e.target.value); setCurrentPage(1); }}
+              placeholder="Filter by product..."
+              className="w-40 border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
           </div>
 
           <div className="flex-1 max-w-xs">

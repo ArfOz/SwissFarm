@@ -124,8 +124,18 @@ async function upsertOpeningHour(
 export class FarmsService {
   constructor(private readonly prisma: PrismaService) {}
 
-        async findAll(types?: FarmType[], locale: Locale = 'en'): Promise<Farm[]> {
+  async findAll(
+    types?: FarmType[],
+    locale: Locale = 'en',
+    filters?: {
+      brokenLocation?: boolean;
+      productIds?: string[];
+      productNames?: string[];
+    },
+  ): Promise<Farm[]> {
     const where: Prisma.FarmWhereInput = {};
+
+    // Filter by farm types
     if (types && types.length > 0) {
       where.types = {
         some: {
@@ -133,6 +143,33 @@ export class FarmsService {
         },
       };
     }
+
+    // Filter farms with broken location (lat = 0 AND lng = 0)
+    if (filters?.brokenLocation) {
+      where.lat = 0;
+      where.lng = 0;
+    }
+
+    // Filter farms that have at least one of the specified product IDs
+    if (filters?.productIds && filters.productIds.length > 0) {
+      where.products = {
+        some: {
+          productId: { in: filters.productIds },
+        },
+      };
+    }
+
+    // Filter farms that have at least one of the specified product names
+    if (filters?.productNames && filters.productNames.length > 0) {
+      where.products = {
+        some: {
+          product: {
+            name: { in: filters.productNames },
+          },
+        },
+      };
+    }
+
     const rows = await this.prisma.farm.findMany({
       where,
       orderBy: { createdAt: 'asc' },

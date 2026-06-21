@@ -82,6 +82,26 @@ export class FarmsController {
   }
 
   @Public()
+  @HttpCode(200)
+  @Post('filter')
+  filter(
+    @Body()
+    filterDto: {
+      types?: FarmType[];
+      brokenLocation?: boolean;
+      productIds?: string[];
+      productNames?: string[];
+    },
+    @Query('locale') locale?: string,
+  ): Promise<Farm[]> {
+    return this.farmsService.findAll(filterDto.types, (locale as Locale) ?? 'en', {
+      brokenLocation: filterDto.brokenLocation,
+      productIds: filterDto.productIds,
+      productNames: filterDto.productNames,
+    });
+  }
+
+  @Public()
   @Get(':id')
   findOne(
     @Param('id') id: string,
