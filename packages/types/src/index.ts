@@ -31,7 +31,7 @@ export interface Farm {
   openingHours?: OpeningHourEntry[];
 }
 
-export type FarmType = 'milk' | 'self_service' | 'pick_your_own' | 'kids';
+export type FarmType = 'milk' | 'self_service' | 'pick_your_own' | 'kids' | 'accommodation';
 
 // DTOs for creating and updating farms — shared between backend and admin
 export type CreateFarmInput = Omit<Farm, 'id' | 'products'> & {
@@ -49,13 +49,14 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   invoice: 'Invoice',
 };
 
-export const FARM_TYPES: FarmType[] = ['milk', 'self_service', 'pick_your_own', 'kids'];
+export const FARM_TYPES: FarmType[] = ['milk', 'self_service', 'pick_your_own', 'kids', 'accommodation'];
 
 export const TYPE_LABELS: Record<string, string> = {
   milk: 'Milk Farm',
   self_service: 'Self-Service',
   pick_your_own: 'Pick Your Own',
   kids: 'Kids Farm',
+  accommodation: 'Accommodation',
 };
 
 export const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;

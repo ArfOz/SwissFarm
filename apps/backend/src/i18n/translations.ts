@@ -40,6 +40,11 @@ export const farmTypeTranslations: Record<string, Record<Locale, string>> = {
     de: 'Kinderbauernhof',
     fr: 'Ferme pour enfants',
   },
+  accommodation: {
+    en: 'Accommodation',
+    de: 'Unterkunft',
+    fr: 'Hébergement',
+  },
 };
 
 // ── Days ──────────────────────────────────────────────────────────────────────
