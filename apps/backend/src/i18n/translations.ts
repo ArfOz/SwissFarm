@@ -11,10 +11,12 @@ export const LOCALE_LABELS: Record<Locale, string> = {
 // ── Payment Methods ──────────────────────────────────────────────────────────
 
 export const paymentMethodTranslations: Record<string, Record<Locale, string>> = {
-  twint:        { en: 'TWINT',              de: 'TWINT',               fr: 'TWINT' },
-  cash:         { en: 'Cash',               de: 'Bar',                 fr: 'Espèces' },
-  credit_card:  { en: 'Credit Card',        de: 'Kreditkarte',         fr: 'Carte de crédit' },
-  invoice:      { en: 'Invoice',            de: 'Rechnung',            fr: 'Facture' },
+  Cash:         { en: 'Cash',               de: 'Bar',                 fr: 'Espèces' },
+  Invoice:      { en: 'Invoice',            de: 'Rechnung',            fr: 'Facture' },
+  TWINT:        { en: 'TWINT',              de: 'TWINT',               fr: 'TWINT' },
+  Vouchers:     { en: 'Vouchers',           de: 'Gutscheine',          fr: 'Bons' },
+  'Credit card': { en: 'Credit Card',       de: 'Kreditkarte',         fr: 'Carte de crédit' },
+  'Debit card':  { en: 'Debit Card',        de: 'Debitkarte',          fr: 'Carte de débit' },
 };
 
 // ── Farm Types ────────────────────────────────────────────────────────────────
