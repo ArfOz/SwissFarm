@@ -3,7 +3,6 @@ import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@sw
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
 import { productTranslations, Locale } from '../i18n/translations';
-import { PaymentMethod as PrismaPaymentMethod } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 export interface FarmWithDistance extends Farm {
@@ -44,7 +43,7 @@ type FarmRow = {
   phone?: string | null;
   website: string | null;
   isActive: boolean;
-  paymentMethods: { paymentMethod: PrismaPaymentMethod }[];
+  paymentMethods: { paymentMethod: { id: string; name: string } }[];
   openingHours: { openingHour: { id: string; day: string; open: string | null; close: string | null } }[];
   products: { product: { id: string; name: string } }[];
 };
@@ -71,7 +70,7 @@ function toFarm(row: any, locale: Locale = 'en'): Farm {
     phone: row.phone ?? undefined,
     website: row.website ?? undefined,
     isActive: row.isActive,
-    paymentMethods: (row.paymentMethods?.map((pm: any) => pm.paymentMethod) as PaymentMethod[]) ?? [],
+    paymentMethods: (row.paymentMethods?.map((pm: any) => pm.paymentMethod.name) as PaymentMethod[]) ?? [],
     openingHours,
   };
 }
@@ -79,7 +78,7 @@ function toFarm(row: any, locale: Locale = 'en'): Farm {
 /** Build the Prisma include needed for all queries */
 const INCLUDE = {
   types: true,
-  paymentMethods: true,
+  paymentMethods: { include: { paymentMethod: true } },
   openingHours: { include: { openingHour: true } },
   products: { select: { product: { select: { id: true, name: true } } } },
 } as const;
@@ -203,8 +202,10 @@ export class FarmsService {
           })),
         },
         paymentMethods: {
-          create: (dto.paymentMethods ?? []).map((method) => ({
-            paymentMethod: method as PrismaPaymentMethod,
+          create: (dto.paymentMethods ?? []).map((name) => ({
+            paymentMethod: {
+              connect: { name },
+            },
           })),
         },
         products: {
@@ -273,12 +274,14 @@ export class FarmsService {
     // If paymentMethods are being updated, replace the entire set
     if (dto.paymentMethods !== undefined) {
       await this.prisma.farmPaymentMethod.deleteMany({ where: { farmId: id } });
-      await this.prisma.farmPaymentMethod.createMany({
-        data: dto.paymentMethods.map((method) => ({
-          farmId: id,
-          paymentMethod: method as PrismaPaymentMethod,
-        })),
-      });
+      for (const name of dto.paymentMethods) {
+        const pm = await this.prisma.paymentMethod.findUnique({ where: { name } });
+        if (pm) {
+          await this.prisma.farmPaymentMethod.create({
+            data: { farmId: id, paymentMethodId: pm.id },
+          });
+        }
+      }
     }
 
     const row = await this.prisma.farm.update({

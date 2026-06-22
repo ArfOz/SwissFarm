@@ -1,7 +1,24 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import * as bcrypt from 'bcryptjs';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-const prisma = new PrismaClient();
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0]);
+
+const PAYMENT_METHODS = [
+  'Cash',
+  'Invoice',
+  'TWINT',
+  'Vouchers',
+  'Credit card',
+  'Debit card',
+];
 
 async function main() {
   // Create default admin
@@ -18,6 +35,16 @@ async function main() {
   });
 
   console.log('✅ Default admin created:', admin.email, '/ admin123');
+
+  // Seed payment methods
+  for (const name of PAYMENT_METHODS) {
+    await prisma.paymentMethod.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+  console.log(`✅ Seeded ${PAYMENT_METHODS.length} payment methods: ${PAYMENT_METHODS.join(', ')}`);
 }
 
 main()

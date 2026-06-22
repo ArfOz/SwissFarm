@@ -9,12 +9,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum PaymentMethod {
-  twint
-  cash
-  credit_card
-  invoice
-}
 
 model Farm {
   id           String            @id @default(cuid())
@@ -34,6 +28,8 @@ model Farm {
   products        FarmProduct[]
   paymentMethods  FarmPaymentMethod[]
   activities      FarmActivity[]
+
+  @@map("farms")
 }
 
 model FarmType {
@@ -50,6 +46,8 @@ model Product {
   id    String        @id @default(cuid())
   name  String        @unique
   farms FarmProduct[]
+
+  @@map("products")
 }
 
 model FarmProduct {
@@ -60,6 +58,7 @@ model FarmProduct {
   product Product @relation(fields: [productId], references: [id])
 
   @@id([farmId, productId])
+  @@map("farm_products")
 }
 
 model OpeningHour {
@@ -68,6 +67,8 @@ model OpeningHour {
   open  String? // "08:00"
   close String? // "18:00"
   farms FarmOpeningHour[]
+
+  @@map("opening_hours")
 }
 
 model FarmOpeningHour {
@@ -78,6 +79,7 @@ model FarmOpeningHour {
   openingHour OpeningHour @relation(fields: [openingHourId], references: [id])
 
   @@id([farmId, openingHourId])
+  @@map("farm_opening_hours")
 }
 
 model Admin {
@@ -87,15 +89,26 @@ model Admin {
   role      String   @default("admin")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model PaymentMethod {
+  id    String              @id @default(cuid())
+  name  String              @unique
+  farms FarmPaymentMethod[]
+
+  @@map("payment_methods")
 }
 
 model FarmPaymentMethod {
-  farmId         String
-  paymentMethod  PaymentMethod
+  farmId          String
+  paymentMethodId String
 
-  farm Farm @relation(fields: [farmId], references: [id])
+  farm           Farm           @relation(fields: [farmId], references: [id])
+  paymentMethod  PaymentMethod  @relation(fields: [paymentMethodId], references: [id])
 
-  @@id([farmId, paymentMethod])
+  @@id([farmId, paymentMethodId])
   @@map("farm_payment_methods")
 }
 
@@ -103,6 +116,8 @@ model Activity {
   id    String         @id @default(cuid())
   name  String         @unique
   farms FarmActivity[]
+
+  @@map("activities")
 }
 
 model FarmActivity {
@@ -113,6 +128,7 @@ model FarmActivity {
   activity Activity @relation(fields: [activityId], references: [id])
 
   @@id([farmId, activityId])
+  @@map("farm_activities")
 }
 
 enum Weekday {
