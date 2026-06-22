@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Farm, TYPE_LABELS } from '@swissfarm/types';
+import { Farm } from '@swissfarm/types';
+import { t } from '../i18n/translations';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -13,7 +14,7 @@ interface FarmCardProps {
 function getTypeLabel(types: Farm['types']): string {
   if (types.length === 0) return '🏡 Farm';
   const type = types[0];
-  return TYPE_LABELS[type] ?? `🏡 ${type}`;
+  return t(`type.${type}`) || `🏡 ${type}`;
 }
 
 export default function FarmCard({ farm, onPress }: FarmCardProps) {

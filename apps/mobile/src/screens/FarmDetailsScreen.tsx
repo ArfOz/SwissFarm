@@ -10,37 +10,43 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { Farm, TYPE_LABELS, DAY_LABELS, PAYMENT_METHOD_LABELS } from '@swissfarm/types';
+import { Farm } from '@swissfarm/types';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { t, fetchTranslations, translatePaymentMethod, getCurrentLocale } from '../i18n/translations';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FarmDetails'>;
 
 function getTypeLabel(types: Farm['types']): string {
-  if (types.length === 0) return '🏡 Farm';
+  if (types.length === 0) return '🏡 ' + t('farms.noProducts') || 'Farm';
   const type = types[0];
-  return TYPE_LABELS[type] ?? `🏡 ${type}`;
+  return t(`type.${type}`) || `🏡 ${type}`;
 }
 
 function formatOpeningHours(openingHours: Farm['openingHours']): string {
-  if (!openingHours || openingHours.length === 0) return 'Not specified';
+  if (!openingHours || openingHours.length === 0) return t('farms.noProducts') || 'Not specified';
   return openingHours
     .map((entry) => {
-      const dayLabel = DAY_LABELS[entry.day] ?? entry.day;
-      if (!entry.open || !entry.close) return `${dayLabel}: Closed`;
+      const dayLabel = t(`day.${entry.day}`) || entry.day;
+      if (!entry.open || !entry.close) return `${dayLabel}: ${t('farms.form.close') || 'Closed'}`;
       return `${dayLabel}: ${entry.open}–${entry.close}`;
     })
     .join('\n');
 }
 
 function formatPaymentMethods(methods: Farm['paymentMethods']): string {
-  return methods.map((m) => PAYMENT_METHOD_LABELS[m] ?? m).join(', ');
+  return methods.map((m) => translatePaymentMethod(m)).join(', ');
 }
 
 export default function FarmDetailsScreen({ route }: Props) {
   const { farm } = route.params;
+
+  // Fetch translations on mount
+  React.useEffect(() => {
+    fetchTranslations(getCurrentLocale());
+  }, []);
 
   function openInMaps() {
     const url = `https://www.google.com/maps/search/?api=1&query=${farm.location.lat},${farm.location.lng}`;
