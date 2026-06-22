@@ -1,8 +1,10 @@
 import { BadRequestException, Controller, Get, Param } from '@nestjs/common';
 import { SUPPORTED_LOCALES, getTranslations, LOCALE_LABELS, Locale } from './translations';
+import { Public } from '../libs/decorators/public.decorator';
 
 @Controller('i18n')
 export class I18nController {
+  @Public()
   /**
    * GET /i18n/:locale
    * Returns all translations for the given locale (en, de, fr).
@@ -22,6 +24,7 @@ export class I18nController {
    * GET /i18n
    * Returns list of supported locales with labels.
    */
+  @Public()
   @Get()
   getLocales() {
     return SUPPORTED_LOCALES.map((locale) => ({
