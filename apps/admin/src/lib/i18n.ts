@@ -230,11 +230,11 @@ export function translate(
   dynamic: DynamicTranslations | null,
   params?: Record<string, string | number>,
 ): string {
-  // 1. Try dynamic translations first (farmTypes, days, products from backend)
+  // 1. Try dynamic translations first (farmTypes, days, products, payment from backend)
   if (dynamic) {
     const dynamicKey =
-      key.startsWith('type.') || key.startsWith('day.') || key.startsWith('product.')
-        ? key.split('.')[1] // e.g. "milk" from "type.milk"
+      key.startsWith('type.') || key.startsWith('day.') || key.startsWith('product.') || key.startsWith('payment.')
+        ? key.split(/\.(.+)/)[1] // everything after the first dot
         : null;
 
     if (dynamicKey) {
@@ -248,9 +248,15 @@ export function translate(
         let value = dynamic.days[dynamicKey];
         return applyParams(value, params);
       }
-      // Try products (fallback: return original key)
-      if (key.startsWith('product.')) {
-        // If cached dynamically, use it; otherwise fall through to key return
+      // Try products
+      if (key.startsWith('product.') && dynamic.ui[key]) {
+        const value = dynamic.ui[key];
+        if (value) return applyParams(value, params);
+      }
+      // Try payment methods
+      if (key.startsWith('payment.') && dynamic.ui[key]) {
+        const value = dynamic.ui[key];
+        if (value) return applyParams(value, params);
       }
     }
   }
