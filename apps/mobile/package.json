@@ -9,25 +9,29 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/native-stack": "^7.3.10",
     "@swissfarm/dto": "workspace:*",
     "@swissfarm/types": "workspace:*",
     "axios": "^1.7.9",
-    "expo": "~53.0.0",
-    "expo-asset": "~11.1.7",
-    "expo-location": "~18.1.5",
-    "expo-status-bar": "~2.2.3",
-    "react": "19.0.0",
-    "react-native": "0.79.6",
+    "expo": "~54.0.35",
+    "expo-asset": "~12.0.13",
+    "expo-constants": "~18.0.13",
+    "expo-location": "~19.0.8",
+    "expo-status-bar": "~3.0.9",
+    "react": "19.1.0",
+    "react-native": "0.81.4",
     "react-native-maps": "1.20.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@types/react": "~19.0.10",
+    "@babel/core": "^7.26.10",
+    "@types/react": "~19.1.0",
+    "metro": "~0.82.5",
+    "metro-config": "~0.82.5",
     "typescript": "~5.8.3"
   },
   "private": true

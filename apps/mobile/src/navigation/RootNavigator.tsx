@@ -8,7 +8,7 @@ import { colors } from '../theme/colors';
 
 export type RootStackParamList = {
   Tabs: undefined;
-  FarmDetails: { farm: Farm };
+  FarmDetails: { farmId: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -31,7 +31,7 @@ export default function RootNavigator() {
         <Stack.Screen
           name="FarmDetails"
           component={FarmDetailsScreen}
-          options={({ route }) => ({ title: route.params.farm.name })}
+          options={{ title: 'Farm Details' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

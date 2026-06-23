@@ -24,6 +24,10 @@ model Farm {
   updatedAt    DateTime          @updatedAt
   isActive     Boolean           @default(true)
 
+  @@index([lat, lng])
+  @@index([isActive])
+  @@index([isActive, lat, lng])
+
   types           FarmType[]
   products        FarmProduct[]
   paymentMethods  FarmPaymentMethod[]

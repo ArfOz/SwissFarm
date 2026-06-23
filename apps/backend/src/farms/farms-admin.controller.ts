@@ -12,88 +12,33 @@ import {
 } from '@nestjs/common';
 import { Farm, FarmType } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
-import { Public } from '../libs/decorators/public.decorator';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
 import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
-import { FarmsService, FarmWithDistance } from './farms.service';
+import { FarmsService } from './farms.service';
 
-@Controller('farms')
-export class FarmsController {
+@Controller('admin/farms')
+export class FarmsAdminController {
   constructor(private readonly farmsService: FarmsService) {}
 
-  // ── PUBLIC Static routes (must precede :id) ──────────────────────────────
-
-  @Public()
-  @Get('map')
-  findAllForMap() {
-    return this.farmsService.findAllForMap();
-  }
-
-  @Public()
+  @AdminOnly()
   @Get('types')
   getTypes(): FarmType[] {
     return this.farmsService.getTypes();
   }
 
-  @Public()
+  @AdminOnly()
   @Get('products')
   getProducts(@Query('locale') locale?: string): Promise<{ id: string; name: string }[]> {
     return this.farmsService.findAllProducts((locale as Locale) ?? 'en');
   }
 
-  @Public()
+  @AdminOnly()
   @Get('cantons')
   getCantons(): Promise<string[]> {
     return this.farmsService.getCantons();
   }
 
-  @Public()
-  @Get('bbox')
-  findByBoundingBox(
-    @Query('minLat') minLat: string,
-    @Query('maxLat') maxLat: string,
-    @Query('minLng') minLng: string,
-    @Query('maxLng') maxLng: string,
-    @Query('locale') locale?: string,
-  ) {
-    return this.farmsService.findByBoundingBox(
-      parseFloat(minLat),
-      parseFloat(maxLat),
-      parseFloat(minLng),
-      parseFloat(maxLng),
-      (locale as Locale) ?? 'en',
-    );
-  }
-
-  @Public()
-  @Get('nearby')
-  findNearby(
-    @Query('lat') lat: string,
-    @Query('lng') lng: string,
-    @Query('radius') radius?: string,
-    @Query('locale') locale?: string,
-  ): Promise<FarmWithDistance[]> {
-    const latNum = parseFloat(lat);
-    const lngNum = parseFloat(lng);
-    if (isNaN(latNum) || isNaN(lngNum)) {
-      throw new BadRequestException('lat and lng query params are required and must be numbers');
-    }
-    const radiusNum = radius ? parseFloat(radius) : 25;
-    return this.farmsService.findNearby(latNum, lngNum, radiusNum, (locale as Locale) ?? 'en');
-  }
-
-  @Public()
-  @Get('search')
-  search(
-    @Query('q') q: string,
-    @Query('locale') locale?: string,
-  ): Promise<Farm[]> {
-    return this.farmsService.search(q ?? '', (locale as Locale) ?? 'en');
-  }
-
-  // ── PUBLIC CRUD (read-only for mobile) ────────────────────────────────────
-
-  @Public()
+  @AdminOnly()
   @Get()
   findAll(
     @Query('types') types?: string,
@@ -105,7 +50,7 @@ export class FarmsController {
     return this.farmsService.findAll(parsedTypes, (locale as Locale) ?? 'en');
   }
 
-  @Public()
+  @AdminOnly()
   @HttpCode(200)
   @Post('filter')
   filter(
@@ -125,7 +70,7 @@ export class FarmsController {
     });
   }
 
-  @Public()
+  @AdminOnly()
   @Get(':id')
   findOne(
     @Param('id') id: string,
@@ -133,8 +78,6 @@ export class FarmsController {
   ): Promise<Farm> {
     return this.farmsService.findOne(id, (locale as Locale) ?? 'en');
   }
-
-  // ── ADMIN-ONLY endpoints ──────────────────────────────────────────────────
 
   @AdminOnly()
   @Post()
@@ -169,5 +112,4 @@ export class FarmsController {
   ): Promise<Farm> {
     return this.farmsService.removeProductFromFarm(farmId, productId, (locale as Locale) ?? 'en');
   }
-
 }

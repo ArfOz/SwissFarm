@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 function resolveBaseUrl(): string {
   const fallback = 'http://localhost:3300/api';
@@ -7,8 +8,17 @@ function resolveBaseUrl(): string {
   const androidOverride = process.env.EXPO_PUBLIC_API_URL_ANDROID;
   const iosOverride = process.env.EXPO_PUBLIC_API_URL_IOS;
 
+  // Use environment overrides if set
   if (Platform.OS === 'android' && androidOverride) return androidOverride;
   if (Platform.OS === 'ios' && iosOverride) return iosOverride;
+
+  // Try to get the Expo dev server host (the machine running the backend)
+  // This is the actual LAN IP when testing on a real device
+  const expoHost = Constants.expoConfig?.hostUri;
+  if (expoHost) {
+    const hostIp = expoHost.split(':')[0]; // e.g. "192.168.1.100"
+    return `http://${hostIp}:3300/api`;
+  }
 
   // Android emulator cannot reach host machine via localhost.
   if (Platform.OS === 'android') {

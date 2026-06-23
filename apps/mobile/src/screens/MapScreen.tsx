@@ -1,153 +1,151 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useRef, useCallback } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import MapView, { Callout, Marker, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
+import MapView, { Region, Marker } from 'react-native-maps';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { Farm, FarmWithDistance } from '@swissfarm/types';
-import { getFarms, getNearbyFarms } from '../api/farms';
+import { Farm } from '@swissfarm/types';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { useMapFarms } from '../hooks/useMapFarms';
+import { getFarmById } from '../api/farms';
+import { Cluster } from '../utils/clustering';
+import ClusterMarker from '../components/ClusterMarker';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
+type NavProp = NativeStackNavigationProp<RootStackParamList, 'Tabs'>;
+
+const INITIAL = { latitude: 46.948, longitude: 7.4474, latitudeDelta: 0.15, longitudeDelta: 0.15 };
+
+interface AirbnbPinProps {
+  lat: number;
+  lng: number;
+  name?: string;
+  canton?: string;
+  onPress?: () => void;
+}
+
+interface FarmPinProps {
+  cluster: Cluster;
+  onPress: (c: Cluster) => void;
+}
+
+// Airbnb-style red marker — teardrop/bubble pin shape like Airbnb
+const AirbnbPin = React.memo(
+  ({
+    lat,
+    lng,
+    name,
+    onPress,
+  }: AirbnbPinProps) => (
+    <Marker
+      coordinate={{ latitude: lat, longitude: lng }}
+      onPress={onPress}
+      tracksViewChanges={false}
+    >
+      <View style={styles.airbnbPin}>
+        <View style={styles.airbnbPinInner} />
+      </View>
+      {name && (
+        <View style={styles.airbnbLabel}>
+          <Text style={styles.airbnbLabelText} numberOfLines={1}>
+            CHF
+          </Text>
+        </View>
+      )}
+    </Marker>
+  ),
+  (a: AirbnbPinProps, b: AirbnbPinProps) => a.lat === b.lat && a.lng === b.lng && a.name === b.name,
+);
+
+// Single farm pin wrapper that also navigates on press
+const FarmPin = React.memo(
+  ({
+    cluster,
+    onPress,
+  }: FarmPinProps) => (
+    <AirbnbPin
+      lat={cluster.latitude}
+      lng={cluster.longitude}
+      name={cluster.sampleName}
+      canton={cluster.sampleCanton}
+      onPress={() => onPress(cluster)}
+    />
+  ),
+  (a: FarmPinProps, b: FarmPinProps) =>
+    a.cluster.id === b.cluster.id &&
+    a.cluster.latitude === b.cluster.latitude &&
+    a.cluster.longitude === b.cluster.longitude,
+);
 
 export default function MapScreen() {
-  const navigation = useNavigation<NavigationProp>();
+  const nav = useNavigation<NavProp>();
+  const { clusters, zoomLevel, loading, error, onRegionChangeComplete } = useMapFarms();
   const mapRef = useRef<MapView>(null);
+  const initRef = useRef(false);
 
-  const [farms, setFarms] = useState<Farm[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    init();
-  }, []);
-
-  useEffect(() => {
-    // Farms yüklendiğinde haritayı tüm marker'ları gösterecek şekilde zoomla
-    if (farms.length > 0 && mapRef.current) {
-      setTimeout(() => {
-        mapRef.current?.fitToCoordinates(
-          farms.map((f) => ({
-            latitude: f.location.lat,
-            longitude: f.location.lng,
-          })),
-          {
-            edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-            animated: true,
-          },
-        );
-      }, 300); // Haritanın render olması için kısa gecikme
-    }
-  }, [farms]);
-
-  async function init() {
-    setLoading(true);
-    setError(null);
-
-    // Önce konum izni iste
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      // Konum izni yoksa tüm farmları getir
-      await loadAllFarms();
-      setLoading(false);
-      return;
-    }
-
-    // Konumu al
-    const loc = await Location.getCurrentPositionAsync({});
-    const lat = loc.coords.latitude;
-    const lng = loc.coords.longitude;
-
-    const inSwitzerland = lat > 45.8 && lat < 47.8 && lng > 5.9 && lng < 10.5;
-
-    if (inSwitzerland) {
-      // Yakındaki farmları backend'den getir
-      await loadNearbyFarms(lat, lng);
-    } else {
-      // İsviçre dışındaysa tümünü göster
-      await loadAllFarms();
-    }
-
-    setLoading(false);
-  }
-
-  async function loadNearbyFarms(lat: number, lng: number) {
-    try {
-      const data = await getNearbyFarms(lat, lng, 50);
-      setFarms(data);
-    } catch {
-      setError('Could not load nearby farms. Please check your connection.');
-    }
-  }
-
-  async function loadAllFarms() {
-    try {
-      const data = await getFarms();
-      setFarms(data);
-    } catch {
-      setError('Could not load farms. Please check your connection.');
-    }
-  }
-
-  const handleMarkerPress = useCallback(
-    (farm: Farm) => {
-      navigation.navigate('FarmDetails', { farm });
+  const handleClusterPress = useCallback(
+    (cluster: Cluster) => {
+      if (cluster.count > 1) {
+        const pad = 0.02;
+        const newRegion: Region = {
+          latitude: cluster.latitude,
+          longitude: cluster.longitude,
+          latitudeDelta: pad,
+          longitudeDelta: pad,
+        };
+        mapRef.current?.animateToRegion(newRegion, 300);
+        onRegionChangeComplete(newRegion);
+      } else if (cluster.markerIds.length > 0) {
+        nav.navigate('FarmDetails', {
+          farmId: cluster.markerIds[0],
+        });
+      }
     },
-    [navigation],
+    [nav, onRegionChangeComplete],
   );
+
+  const handleReady = useCallback(() => {
+    if (initRef.current) return;
+    initRef.current = true;
+    onRegionChangeComplete(INITIAL);
+  }, [onRegionChangeComplete]);
+
+  const showIndividualPins = zoomLevel >= 13;
 
   return (
     <View style={styles.container}>
       <MapView
         ref={mapRef}
         style={styles.map}
-        initialRegion={{
-          latitude: 46.8,
-          longitude: 8.2,
-          latitudeDelta: 1.5,
-          longitudeDelta: 1.5,
-        }}
+        initialRegion={INITIAL}
+        onLayout={handleReady}
+        onMapReady={() => onRegionChangeComplete(INITIAL)}
+        onRegionChangeComplete={onRegionChangeComplete}
         showsUserLocation
         showsMyLocationButton
       >
-        {farms.map((farm) => (
-          <Marker
-            key={farm.id}
-            identifier={farm.id}
-            coordinate={{ latitude: farm.location.lat, longitude: farm.location.lng }}
-            pinColor={colors.mapMarker}
-            onCalloutPress={() => handleMarkerPress(farm)}
-          >
-            <Callout tooltip={false}>
-              <View style={styles.callout}>
-                <Text style={[typography.label, styles.calloutName]}>{farm.name}</Text>
-                <Text style={[typography.caption, styles.calloutSub]}>
-                  {farm.canton}
-                  {'distance' in farm && farm.distance !== undefined
-                    ? ` · ${(farm as FarmWithDistance).distance.toFixed(1)} km`
-                    : ''}
-                  {' · Tap to open'}
-                </Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
+        {/* Clusters shown at all zoom levels < 13 */}
+        {!showIndividualPins &&
+          clusters.map((c) => <ClusterMarker key={c.id} cluster={c} onPress={handleClusterPress} />)}
+
+        {/* Individual pins only at zoom >= 13 — all farms shown individually */}
+        {showIndividualPins &&
+          clusters
+            .filter((c) => c.count === 1)
+            .map((c) => <FarmPin key={c.id} cluster={c} onPress={handleClusterPress} />)}
       </MapView>
 
       {loading && (
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[typography.bodySmall, styles.loadingText]}>Loading farms…</Text>
         </View>
       )}
 
       {error && (
-        <View style={styles.errorBanner}>
-          <Text style={[typography.bodySmall, styles.errorText]}>{error}</Text>
+        <View style={styles.error}>
+          <Text style={[typography.bodySmall, { color: '#fff' }]}>{error}</Text>
         </View>
       )}
     </View>
@@ -157,39 +155,52 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
-  callout: {
-    padding: spacing.sm,
-    minWidth: 140,
-    maxWidth: 220,
-  },
-  calloutName: {
-    color: colors.textPrimary,
-    marginBottom: 2,
-  },
-  calloutSub: {
-    color: colors.textSecondary,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.7)',
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(255,255,255,0.6)', justifyContent: 'center', alignItems: 'center' },
+  error: { position: 'absolute', bottom: spacing.lg, left: spacing.md, right: spacing.md, backgroundColor: colors.error, borderRadius: 8, padding: spacing.md },
+
+  // Airbnb-style teardrop pin
+  airbnbPin: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FF385C', // Airbnb red
     justifyContent: 'center',
     alignItems: 'center',
-    gap: spacing.sm,
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  loadingText: {
-    color: colors.textSecondary,
+  airbnbPinInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#fff',
   },
-  errorBanner: {
+
+  // Price label bubble above the pin (like Airbnb shows price)
+  airbnbLabel: {
     position: 'absolute',
-    bottom: spacing.lg,
-    left: spacing.md,
-    right: spacing.md,
-    backgroundColor: colors.error,
+    bottom: 36,
+    alignSelf: 'center',
+    backgroundColor: '#fff',
     borderRadius: 8,
-    padding: spacing.md,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
-  errorText: {
-    color: colors.textOnPrimary,
-    textAlign: 'center',
+  airbnbLabelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FF385C',
   },
 });

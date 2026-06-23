@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Linking,
   ScrollView,
@@ -16,6 +17,7 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { t, fetchTranslations, translatePaymentMethod, getCurrentLocale } from '../i18n/translations';
+import { getFarmById } from '../api/farms';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FarmDetails'>;
 
@@ -40,15 +42,25 @@ function formatPaymentMethods(methods: Farm['paymentMethods']): string {
   return methods.map((m) => translatePaymentMethod(m)).join(', ');
 }
 
-export default function FarmDetailsScreen({ route }: Props) {
-  const { farm } = route.params;
+export default function FarmDetailsScreen({ route, navigation }: Props) {
+  const { farmId } = route.params;
+  const [farm, setFarm] = useState<Farm | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch translations on mount
-  React.useEffect(() => {
+  // Fetch farm details on mount
+  useEffect(() => {
     fetchTranslations(getCurrentLocale());
-  }, []);
+    getFarmById(farmId)
+      .then((data) => {
+        setFarm(data);
+        navigation.setOptions({ title: data.name });
+      })
+      .catch(() => Alert.alert('Error', 'Failed to load farm details'))
+      .finally(() => setLoading(false));
+  }, [farmId, navigation]);
 
   function openInMaps() {
+    if (!farm) return;
     const url = `https://www.google.com/maps/search/?api=1&query=${farm.location.lat},${farm.location.lng}`;
     Linking.canOpenURL(url).then((supported) => {
       if (supported) {
@@ -60,9 +72,25 @@ export default function FarmDetailsScreen({ route }: Props) {
   }
 
   function openWebsite() {
-    if (farm.website) {
+    if (farm?.website) {
       Linking.openURL(farm.website);
     }
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!farm) {
+    return (
+      <View style={styles.centered}>
+        <Text style={[typography.body, { color: colors.error }]}>Farm not found</Text>
+      </View>
+    );
   }
 
   return (
@@ -144,6 +172,7 @@ export default function FarmDetailsScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
   typeBadge: {
     alignSelf: 'flex-start',
     backgroundColor: colors.primary,
