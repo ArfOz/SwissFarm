@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Marker, Callout } from 'react-native-maps';
+import { Marker } from '@maplibre/maplibre-react-native';
 import { FarmLocation } from '@swissfarm/types';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -17,57 +17,63 @@ export interface MemoizedMarkerData {
 interface MemoizedFarmMarkerProps {
   marker: MemoizedMarkerData;
   onPress: (id: string) => void;
+  isSelected?: boolean;
 }
 
 /**
- * Memoized marker component — only re-renders when its props actually change.
- * This is critical for performance when showing hundreds/thousands of markers.
+ * Airbnb-style pill marker.
+ * Default: white bg + dark text pill.
+ * Selected: dark bg + white text pill.
  */
-const MemoizedFarmMarker: React.FC<MemoizedFarmMarkerProps> = ({ marker, onPress }) => {
+const MemoizedFarmMarker: React.FC<MemoizedFarmMarkerProps> = ({ marker, onPress, isSelected }) => {
   return (
     <Marker
-      key={marker.id}
-      identifier={marker.id}
-      coordinate={{
-        latitude: marker.location.lat,
-        longitude: marker.location.lng,
-      }}
-      pinColor={colors.mapMarker}
-      tracksViewChanges={false}
-      onCalloutPress={() => onPress(marker.id)}
+      id={marker.id}
+      lngLat={[marker.location.lng, marker.location.lat]}
+      anchor="center"
+      onPress={() => onPress(marker.id)}
     >
-      <Callout tooltip={false}>
-        <View style={styles.callout}>
-          <Text style={[typography.label, styles.calloutName]}>{marker.name}</Text>
-          <Text style={[typography.caption, styles.calloutSub]}>
-            {marker.canton}
-            {' · Tap to open'}
-          </Text>
-        </View>
-      </Callout>
+      <View style={[styles.pill, isSelected ? styles.pillSelected : styles.pillDefault]}>
+        <Text style={[styles.pillText, isSelected ? styles.pillTextSelected : styles.pillTextDefault]}>
+          {marker.name}
+        </Text>
+      </View>
     </Marker>
   );
 };
 
 const styles = StyleSheet.create({
-  callout: {
-    padding: spacing.sm,
-    minWidth: 140,
-    maxWidth: 220,
+  pill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
   },
-  calloutName: {
-    color: colors.textPrimary,
-    marginBottom: 2,
+  pillDefault: {
+    backgroundColor: '#FFFFFF',
   },
-  calloutSub: {
-    color: colors.textSecondary,
+  pillSelected: {
+    backgroundColor: '#222222',
+    borderColor: '#222222',
+  },
+  pillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  pillTextDefault: {
+    color: '#222222',
+  },
+  pillTextSelected: {
+    color: '#FFFFFF',
   },
 });
 
-/**
- * Custom comparison function for React.memo.
- * Only re-render if the marker id, name, or coordinates actually changed.
- */
 function arePropsEqual(
   prevProps: MemoizedFarmMarkerProps,
   nextProps: MemoizedFarmMarkerProps,
@@ -80,6 +86,7 @@ function arePropsEqual(
     a.location.lat === b.location.lat &&
     a.location.lng === b.location.lng &&
     a.canton === b.canton &&
+    prevProps.isSelected === nextProps.isSelected &&
     prevProps.onPress === nextProps.onPress
   );
 }

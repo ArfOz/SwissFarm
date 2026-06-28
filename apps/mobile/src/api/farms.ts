@@ -77,6 +77,14 @@ export async function getNearbyFarms(
   return response.data;
 }
 
+/** POST /mobile/farms/:farmId/suggestions — submit a suggestion with optional photo (base64 or URI) */
+export async function submitSuggestion(
+  farmId: string,
+  data: { author?: string; email?: string; message: string; photo?: string },
+): Promise<void> {
+  await apiClient.post(`/mobile/farms/${farmId}/suggestions`, data);
+}
+
 /** GET /mobile/farms/search — case-insensitive search */
 export async function searchFarms(query: string): Promise<Farm[]> {
   const q = query.trim();

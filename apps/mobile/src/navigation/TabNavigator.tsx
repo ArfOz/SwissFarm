@@ -1,15 +1,17 @@
 import React from 'react';
 import { Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import MapScreen from '../screens/MapScreen';
 import ListScreen from '../screens/ListScreen';
+import FarmsMapScreen from '../screens/FarmsMapScreen'; 
 import ContactScreen from '../screens/ContactScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { colors } from '../theme/colors';
 
 export type TabParamList = {
-  Map: undefined;
   List: undefined;
+  Map: undefined; 
   Contact: undefined;
+  Settings: undefined;
 };
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -27,14 +29,6 @@ export default function TabNavigator() {
       }}
     >
       <Tab.Screen
-        name="Map"
-        component={MapScreen}
-        options={{
-          tabBarLabel: 'Map',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🗺️</Text>,
-        }}
-      />
-      <Tab.Screen
         name="List"
         component={ListScreen}
         options={{
@@ -43,11 +37,27 @@ export default function TabNavigator() {
         }}
       />
       <Tab.Screen
+        name="Map"
+        component={FarmsMapScreen}
+        options={{
+          tabBarLabel: 'Map',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🗺️</Text>,
+        }}
+      />
+      <Tab.Screen
         name="Contact"
         component={ContactScreen}
         options={{
           tabBarLabel: 'Contact',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📬</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: 'Settings',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>⚙️</Text>,
         }}
       />
     </Tab.Navigator>

@@ -17,6 +17,16 @@ export interface MapMarkerLight {
   types: string[];
 }
 
+/** Lightweight marker returned by the /farms/map endpoint (with bbox filter) */
+export interface MapFarmMarker {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  canton: string;
+  types: string[];
+}
+
 export interface BBoxQuery {
   southWestLat: number;
   southWestLng: number;
@@ -139,19 +149,69 @@ export class FarmsService {
     return rows.map(mapToMarkerLight);
   }
 
-  async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
-    const { southWestLat, southWestLng, northEastLat, northEastLng } = bbox;
+async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
+  let { southWestLat, southWestLng, northEastLat, northEastLng } = bbox;
+
+  // 🔥 Minimum BBOX genişliği (zoom-in sonrası boş gelmeyi engeller)
+  const MIN_SPAN = 0.02; // ~2 km
+
+  const latSpan = northEastLat - southWestLat;
+  const lngSpan = northEastLng - southWestLng;
+
+  if (latSpan < MIN_SPAN) {
+    const pad = (MIN_SPAN - latSpan) / 2;
+    southWestLat -= pad;
+    northEastLat += pad;
+  }
+
+  if (lngSpan < MIN_SPAN) {
+    const pad = (MIN_SPAN - lngSpan) / 2;
+    southWestLng -= pad;
+    northEastLng += pad;
+  }
+
+  const rows = await this.prisma.farm.findMany({
+    where: {
+      isActive: true,
+      lat: { gte: southWestLat, lte: northEastLat },
+      lng: { gte: southWestLng, lte: northEastLng },
+      NOT: { lat: 0, lng: 0 },
+    },
+    select: MAP_SELECT,
+    orderBy: { name: 'asc' },
+  });
+
+  return rows.map(mapToMarkerLight);
+}
+
+
+  async findForMap(minLat: number, maxLat: number, minLng: number, maxLng: number): Promise<MapFarmMarker[]> {
     const rows = await this.prisma.farm.findMany({
       where: {
         isActive: true,
-        lat: { gte: southWestLat, lte: northEastLat },
-        lng: { gte: southWestLng, lte: northEastLng },
+        lat: { gte: minLat, lte: maxLat },
+        lng: { gte: minLng, lte: maxLng },
         NOT: { lat: 0, lng: 0 },
       },
-      select: MAP_SELECT,
+      select: {
+        id: true,
+        name: true,
+        lat: true,
+        lng: true,
+        canton: true,
+        types: { select: { type: true } },
+      },
+      take: 500,
       orderBy: { name: 'asc' },
     });
-    return rows.map(mapToMarkerLight);
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      lat: row.lat,
+      lng: row.lng,
+      canton: row.canton,
+      types: row.types.map((t) => t.type),
+    }));
   }
 
   async findByBoundingBox(

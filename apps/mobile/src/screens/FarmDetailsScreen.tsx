@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Linking,
   ScrollView,
@@ -17,7 +16,6 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { t, fetchTranslations, translatePaymentMethod, getCurrentLocale } from '../i18n/translations';
-import { getFarmById } from '../api/farms';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'FarmDetails'>;
 
@@ -43,24 +41,14 @@ function formatPaymentMethods(methods: Farm['paymentMethods']): string {
 }
 
 export default function FarmDetailsScreen({ route, navigation }: Props) {
-  const { farmId } = route.params;
-  const [farm, setFarm] = useState<Farm | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { farm } = route.params;
 
-  // Fetch farm details on mount
   useEffect(() => {
     fetchTranslations(getCurrentLocale());
-    getFarmById(farmId)
-      .then((data) => {
-        setFarm(data);
-        navigation.setOptions({ title: data.name });
-      })
-      .catch(() => Alert.alert('Error', 'Failed to load farm details'))
-      .finally(() => setLoading(false));
-  }, [farmId, navigation]);
+    navigation.setOptions({ title: farm.name });
+  }, [farm, navigation]);
 
   function openInMaps() {
-    if (!farm) return;
     const url = `https://www.google.com/maps/search/?api=1&query=${farm.location.lat},${farm.location.lng}`;
     Linking.canOpenURL(url).then((supported) => {
       if (supported) {
@@ -72,25 +60,9 @@ export default function FarmDetailsScreen({ route, navigation }: Props) {
   }
 
   function openWebsite() {
-    if (farm?.website) {
+    if (farm.website) {
       Linking.openURL(farm.website);
     }
-  }
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
-  if (!farm) {
-    return (
-      <View style={styles.centered}>
-        <Text style={[typography.body, { color: colors.error }]}>Farm not found</Text>
-      </View>
-    );
   }
 
   return (
@@ -165,6 +137,15 @@ export default function FarmDetailsScreen({ route, navigation }: Props) {
       <TouchableOpacity style={styles.mapsButton} onPress={openInMaps} activeOpacity={0.8}>
         <Text style={[typography.button, styles.mapsButtonText]}>📍 Open in Maps</Text>
       </TouchableOpacity>
+
+      {/* Suggest Button */}
+      <TouchableOpacity
+        style={styles.suggestButton}
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('Suggest', { farmId: farm.id, farmName: farm.name })}
+      >
+        <Text style={[typography.button, styles.suggestButtonText]}>{t('suggest.button')}</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -216,4 +197,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   mapsButtonText: { color: colors.textOnPrimary },
+  suggestButton: {
+    backgroundColor: colors.secondary,
+    borderRadius: 12,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    marginTop: spacing.sm,
+  },
+  suggestButtonText: { color: colors.textOnPrimary },
 });

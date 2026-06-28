@@ -5,8 +5,9 @@ import { ImportModule } from './import/import.module';
 import { I18nModule } from './i18n/i18n.module';
 import { AuthModule } from './auth/auth.module';
 import { BackupModule } from './backup/backup.module';
+import { SuggestionsModule } from './suggestions/suggestions.module';
 
 @Module({
-  imports: [PrismaModule, FarmsModule, ImportModule, I18nModule, AuthModule, BackupModule],
+  imports: [PrismaModule, FarmsModule, ImportModule, I18nModule, AuthModule, BackupModule, SuggestionsModule],
 })
 export class AppModule {}

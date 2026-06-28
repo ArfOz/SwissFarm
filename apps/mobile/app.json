@@ -1,22 +1,26 @@
 {
   "expo": {
-    "name": "SwissFarm Mobile",
+    "name": "SwissFarm",
     "slug": "swissfarm-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "devClient": {
+      "silentLaunch": true
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.swissfarm.mobile",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "SwissFarm needs your location to show nearby farms on the map."
+        "NSLocationWhenInUseUsageDescription": "SwissFarm needs your location to show nearby farms on the map.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,7 +31,9 @@
       "package": "com.swissfarm.mobile",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -40,7 +46,23 @@
           "locationWhenInUsePermission": "SwissFarm needs your location to show nearby farms on the map."
         }
       ],
-      "expo-asset"
-    ]
+      "expo-asset",
+      [
+        "@maplibre/maplibre-react-native",
+        {
+          "android": {
+            "accessToken": ""
+          },
+          "ios": {
+            "accessToken": ""
+          }
+        }
+      ],
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e1d9baad-1bb1-41e5-8795-6809fe0ec513"
+      }
+    }
   }
 }

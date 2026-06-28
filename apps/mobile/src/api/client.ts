@@ -4,9 +4,10 @@ import Constants from 'expo-constants';
 
 function resolveBaseUrl(): string {
   const fallback = 'http://localhost:3300/api';
-  const raw = process.env.EXPO_PUBLIC_API_URL ?? fallback;
-  const androidOverride = process.env.EXPO_PUBLIC_API_URL_ANDROID;
-  const iosOverride = process.env.EXPO_PUBLIC_API_URL_IOS;
+  const env = (globalThis as any).process?.env;
+  const raw = env?.EXPO_PUBLIC_API_URL ?? fallback;
+  const androidOverride = env?.EXPO_PUBLIC_API_URL_ANDROID;
+  const iosOverride = env?.EXPO_PUBLIC_API_URL_IOS;
 
   // Use environment overrides if set
   if (Platform.OS === 'android' && androidOverride) return androidOverride;

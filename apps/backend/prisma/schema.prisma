@@ -32,6 +32,7 @@ model Farm {
   products        FarmProduct[]
   paymentMethods  FarmPaymentMethod[]
   activities      FarmActivity[]
+  suggestions     Suggestion[]
 
   @@map("farms")
 }
@@ -47,12 +48,15 @@ model FarmType {
 }
 
 model Product {
-  id    String        @id @default(cuid())
-  name  String        @unique
-  farms FarmProduct[]
+  id       String          @id @default(cuid())
+  name     String          @unique
+  category ProductCategory @default(other)
+  farms    FarmProduct[]
 
   @@map("products")
 }
+
+
 
 model FarmProduct {
   farmId    String
@@ -134,6 +138,36 @@ model FarmActivity {
   @@id([farmId, activityId])
   @@map("farm_activities")
 }
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  farmId    String
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  userId    String?
+  author    String?
+  email     String?
+  message   String   @db.VarChar(1000)
+  photo     String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([farmId])
+  @@index([status])
+  @@map("suggestions")
+}
+
+enum ProductCategory {
+  milk
+  fruit
+  vegetable
+  honey
+  egg
+  meat
+  other
+}
+
+
 
 enum Weekday {
   monday

@@ -9,13 +9,16 @@ import {
   Patch,
   Post,
   Query,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { Farm, FarmType } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
 import { Public } from '../libs/decorators/public.decorator';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
 import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
-import { FarmsService, FarmWithDistance } from './farms.service';
+import { MapQueryDto } from './dto';
+import { FarmsService, FarmWithDistance, MapFarmMarker } from './farms.service';
 
 @Controller('farms')
 export class FarmsController {
@@ -25,8 +28,14 @@ export class FarmsController {
 
   @Public()
   @Get('map')
-  findAllForMap() {
-    return this.farmsService.findAllForMap();
+  @UsePipes(new ValidationPipe({ transform: true, whitelist: true }))
+  findAllForMap(@Query() query: MapQueryDto): Promise<MapFarmMarker[]> {
+    return this.farmsService.findForMap(
+      parseFloat(query.minLat),
+      parseFloat(query.maxLat),
+      parseFloat(query.minLng),
+      parseFloat(query.maxLng),
+    );
   }
 
   @Public()

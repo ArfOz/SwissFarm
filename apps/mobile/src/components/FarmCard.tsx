@@ -5,6 +5,7 @@ import { t } from '../i18n/translations';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { useLocale } from '../i18n/LocaleContext';
 
 interface FarmCardProps {
   farm: Farm;
@@ -18,6 +19,8 @@ function getTypeLabel(types: Farm['types']): string {
 }
 
 export default function FarmCard({ farm, onPress }: FarmCardProps) {
+  // Re-render when locale changes
+  useLocale();
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(farm)} activeOpacity={0.7}>
       <View style={styles.header}>

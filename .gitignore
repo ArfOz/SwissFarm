@@ -5,6 +5,9 @@ node_modules/
 dist/
 .next/
 out/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/android/build/
 
 # Environment files
 .env
@@ -15,6 +18,9 @@ out/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+build_log.txt
+install-log.txt
+build-log.txt
 
 # OS
 .DS_Store
@@ -27,6 +33,19 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 
+# Prisma
+apps/backend/prisma.config.tsbuildinfo
+
+# Local Azurite storage (local emulator)
+__azurite_db_queue__*.json
+__azurite_db_queue_extent__.json
+__queuestorage__/
+
+# Local backups
+backups/
 
 # Import (local only)
 apps/backend/src/import/
+
+# Metro / Expo local state
+apps/mobile/.expo/
