@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@swissfarm/types';
+import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod, ProductCategory } from '@swissfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto } from '@swissfarm/dto';
 import { productTranslations, Locale } from '../i18n/translations';
 import { Prisma } from '@prisma/client';
 
@@ -68,6 +68,7 @@ function toFarm(row: any, locale: Locale = 'en'): Farm {
     products: (row.products ?? []).map((fp: any) => ({
       id: fp.product.id,
       name: translateProductName(fp.product.name, locale),
+      category: fp.product.category ?? undefined,
     })),
     location: { lat: row.lat, lng: row.lng },
     address: row.address,
@@ -85,7 +86,7 @@ const INCLUDE = {
   types: true,
   paymentMethods: { include: { paymentMethod: true } },
   openingHours: { include: { openingHour: true } },
-  products: { select: { product: { select: { id: true, name: true } } } },
+  products: { select: { product: { select: { id: true, name: true, category: true } } } },
 } as const;
 
 const MAP_SELECT = {
@@ -422,14 +423,41 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
     return this.findOne(farmId, locale);
   }
 
-  async findAllProducts(locale: Locale = 'en'): Promise<{ id: string; name: string }[]> {
+  async findAllProducts(locale: Locale = 'en'): Promise<{ id: string; name: string; category?: string }[]> {
     const products = await this.prisma.product.findMany({
-      select: { id: true, name: true },
+      select: { id: true, name: true, category: true },
       orderBy: { name: 'asc' },
     });
     return products.map((p) => ({
       id: p.id,
       name: translateProductName(p.name, locale),
+      category: p.category ?? undefined,
     }));
+  }
+
+  async updateProductCategory(dto: UpdateProductCategoryDto): Promise<{ id: string; name: string; category?: string }> {
+    const product = await this.prisma.product.findUnique({
+      where: { id: dto.productId },
+    });
+    if (!product) throw new NotFoundException(`Product with id "${dto.productId}" not found`);
+
+    const updated = await this.prisma.product.update({
+      where: { id: dto.productId },
+      data: { category: dto.category },
+      select: { id: true, name: true, category: true },
+    });
+    return {
+      id: updated.id,
+      name: updated.name,
+      category: updated.category ?? undefined,
+    };
+  }
+
+  async getProductsByCategory(): Promise<{ id: string; name: string }[]> {
+    const products = await this.prisma.product.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+    return products;
   }
 }

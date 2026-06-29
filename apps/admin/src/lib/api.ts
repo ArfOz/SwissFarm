@@ -114,3 +114,27 @@ export async function deleteFarm(id: string): Promise<void> {
   });
   if (!res.ok) throw new Error(`Failed to delete farm ${id}: ${res.statusText}`);
 }
+
+// ── PRODUCT CATEGORIES ─────────────────────────────────────────────────────
+
+export async function fetchAllProducts(): Promise<{ id: string; name: string; category?: string }[]> {
+  const res = await authFetch(`${API_URL}/admin/farms/products`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to fetch products: ${res.statusText}`);
+  return res.json() as Promise<{ id: string; name: string; category?: string }[]>;
+}
+
+export async function fetchProductCategories(): Promise<string[]> {
+  const res = await authFetch(`${API_URL}/admin/farms/products/categories`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to fetch categories: ${res.statusText}`);
+  return res.json() as Promise<string[]>;
+}
+
+export async function updateProductCategory(productId: string, category: string): Promise<{ id: string; name: string; category?: string }> {
+  const res = await authFetch(`${API_URL}/admin/farms/products/category`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ productId, category }),
+  });
+  if (!res.ok) throw new Error(`Failed to update product category: ${res.statusText}`);
+  return res.json() as Promise<{ id: string; name: string; category?: string }>;
+}

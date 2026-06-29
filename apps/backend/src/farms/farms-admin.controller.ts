@@ -8,12 +8,13 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
-import { Farm, FarmType } from '@swissfarm/types';
+import { Farm, FarmType, ProductCategory, PRODUCT_CATEGORIES } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
-import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto } from '@swissfarm/dto';
 import { FarmsService } from './farms.service';
 
 @Controller('admin/farms')
@@ -111,5 +112,30 @@ export class FarmsAdminController {
     @Query('locale') locale?: string,
   ): Promise<Farm> {
     return this.farmsService.removeProductFromFarm(farmId, productId, (locale as Locale) ?? 'en');
+  }
+
+  // ── PRODUCT CATEGORY MANAGEMENT ─────────────────────────────────────────
+
+  @AdminOnly()
+  @Get('products/categories')
+  getCategories(): ProductCategory[] {
+    return PRODUCT_CATEGORIES;
+  }
+
+  @AdminOnly()
+  @Get('products/category/:category')
+  getProductsByCategory(
+    @Param('category') category: string,
+  ): Promise<{ id: string; name: string }[]> {
+    return this.farmsService.getProductsByCategory();
+  }
+
+  @AdminOnly()
+  @Put('products/category')
+  @HttpCode(200)
+  updateProductCategory(
+    @Body() dto: UpdateProductCategoryDto,
+  ): Promise<{ id: string; name: string; category?: string }> {
+    return this.farmsService.updateProductCategory(dto);
   }
 }

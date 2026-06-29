@@ -1,3 +1,17 @@
+export type ProductCategory = 'milk' | 'fruit' | 'vegetable' | 'honey' | 'egg' | 'meat' | 'other';
+
+export const PRODUCT_CATEGORIES: ProductCategory[] = ['milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'];
+
+export const CATEGORY_LABELS: Record<ProductCategory, string> = {
+  milk: 'Milk',
+  fruit: 'Fruit',
+  vegetable: 'Vegetable',
+  honey: 'Honey',
+  egg: 'Egg',
+  meat: 'Meat',
+  other: 'Other',
+};
+
 export interface FarmLocation {
   lat: number;
   lng: number;
@@ -12,6 +26,7 @@ export interface OpeningHourEntry {
 export interface ProductInfo {
   id: string;
   name: string;
+  category?: ProductCategory;
 }
 
 export type PaymentMethod = string;
