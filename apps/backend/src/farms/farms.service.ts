@@ -160,7 +160,7 @@ export class FarmsService {
 async findByBBox(bbox: BBoxQuery, categoryIds?: string[], productIds?: string[]): Promise<MapMarkerLight[]> {
   let { southWestLat, southWestLng, northEastLat, northEastLng } = bbox;
 
-  // 🔥 Minimum BBOX genişliği (zoom-in sonrası boş gelmeyi engeller)
+  // 🔥 Minimum BBOX span to prevent empty results after zoom-in
   const MIN_SPAN = 0.02; // ~2 km
 
   const latSpan = northEastLat - southWestLat;
