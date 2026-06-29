@@ -16,7 +16,7 @@ import { Farm, FarmType } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
 import { Public } from '../libs/decorators/public.decorator';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
-import { CreateFarmDto, UpdateFarmDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
 import { MapQueryDto } from './dto';
 import { FarmsService, FarmWithDistance, MapFarmMarker } from './farms.service';
 
@@ -124,6 +124,7 @@ export class FarmsController {
       brokenLocation?: boolean;
       productIds?: string[];
       productNames?: string[];
+      categoryIds?: string[];
     },
     @Query('locale') locale?: string,
   ): Promise<Farm[]> {
@@ -131,6 +132,7 @@ export class FarmsController {
       brokenLocation: filterDto.brokenLocation,
       productIds: filterDto.productIds,
       productNames: filterDto.productNames,
+      categoryIds: filterDto.categoryIds,
     });
   }
 

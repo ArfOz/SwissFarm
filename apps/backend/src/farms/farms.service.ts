@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod, ProductCategory } from '@swissfarm/types';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@swissfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
 import { productTranslations, Locale } from '../i18n/translations';
 import { Prisma } from '@prisma/client';
 
@@ -68,7 +68,8 @@ function toFarm(row: any, locale: Locale = 'en'): Farm {
     products: (row.products ?? []).map((fp: any) => ({
       id: fp.product.id,
       name: translateProductName(fp.product.name, locale),
-      category: fp.product.category ?? undefined,
+      category: fp.product.category?.name ?? undefined,
+      categoryId: fp.product.categoryId ?? undefined,
     })),
     location: { lat: row.lat, lng: row.lng },
     address: row.address,
@@ -86,7 +87,7 @@ const INCLUDE = {
   types: true,
   paymentMethods: { include: { paymentMethod: true } },
   openingHours: { include: { openingHour: true } },
-  products: { select: { product: { select: { id: true, name: true, category: true } } } },
+  products: { select: { product: { select: { id: true, name: true, categoryId: true, category: { select: { id: true, name: true } } } } } },
 } as const;
 
 const MAP_SELECT = {
@@ -141,16 +142,22 @@ function mapToMarkerLight(row: {
 export class FarmsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAllForMap(): Promise<MapMarkerLight[]> {
+  async findAllForMap(categoryIds?: string[], productIds?: string[]): Promise<MapMarkerLight[]> {
+    const where: Prisma.FarmWhereInput = { isActive: true };
+    if (productIds && productIds.length > 0) {
+      where.products = { some: { productId: { in: productIds } } };
+    } else if (categoryIds && categoryIds.length > 0) {
+      where.products = { some: { product: { categoryId: { in: categoryIds } } } };
+    }
     const rows = await this.prisma.farm.findMany({
-      where: { isActive: true },
+      where,
       select: MAP_SELECT,
       orderBy: { name: 'asc' },
     });
     return rows.map(mapToMarkerLight);
   }
 
-async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
+async findByBBox(bbox: BBoxQuery, categoryIds?: string[], productIds?: string[]): Promise<MapMarkerLight[]> {
   let { southWestLat, southWestLng, northEastLat, northEastLng } = bbox;
 
   // 🔥 Minimum BBOX genişliği (zoom-in sonrası boş gelmeyi engeller)
@@ -171,13 +178,19 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
     northEastLng += pad;
   }
 
+  const where: Prisma.FarmWhereInput = {
+    isActive: true,
+    lat: { gte: southWestLat, lte: northEastLat },
+    lng: { gte: southWestLng, lte: northEastLng },
+    NOT: { lat: 0, lng: 0 },
+  };
+  if (productIds && productIds.length > 0) {
+    where.products = { some: { productId: { in: productIds } } };
+  } else if (categoryIds && categoryIds.length > 0) {
+    where.products = { some: { product: { categoryId: { in: categoryIds } } } };
+  }
   const rows = await this.prisma.farm.findMany({
-    where: {
-      isActive: true,
-      lat: { gte: southWestLat, lte: northEastLat },
-      lng: { gte: southWestLng, lte: northEastLng },
-      NOT: { lat: 0, lng: 0 },
-    },
+    where,
     select: MAP_SELECT,
     orderBy: { name: 'asc' },
   });
@@ -242,6 +255,7 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
       brokenLocation?: boolean;
       productIds?: string[];
       productNames?: string[];
+      categoryIds?: string[];
     },
   ): Promise<Farm[]> {
     const where: Prisma.FarmWhereInput = {};
@@ -258,6 +272,9 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
     }
     if (filters?.productNames && filters.productNames.length > 0) {
       where.products = { some: { product: { name: { in: filters.productNames } } } };
+    }
+    if (filters?.categoryIds && filters.categoryIds.length > 0) {
+      where.products = { some: { product: { categoryId: { in: filters.categoryIds } } } };
     }
 
     const rows = await this.prisma.farm.findMany({
@@ -295,7 +312,15 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
         },
         products: {
           create: dto.products.map((name) => ({
-            product: { connectOrCreate: { where: { name }, create: { name } } },
+            product: {
+              connectOrCreate: {
+                where: { name },
+                create: {
+                  name,
+                  category: { connect: { name: 'other' } },
+                },
+              },
+            },
           })),
         },
       },
@@ -318,7 +343,15 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
       await this.prisma.farmProduct.deleteMany({ where: { farmId: id } });
       productUpdate = {
         create: dto.products.map((name) => ({
-          product: { connectOrCreate: { where: { name }, create: { name } } },
+          product: {
+            connectOrCreate: {
+              where: { name },
+              create: {
+                name,
+                category: { connect: { name: 'other' } },
+              },
+            },
+          },
         })),
       };
     }
@@ -425,31 +458,47 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
 
   async findAllProducts(locale: Locale = 'en'): Promise<{ id: string; name: string; category?: string }[]> {
     const products = await this.prisma.product.findMany({
-      select: { id: true, name: true, category: true },
+      select: { id: true, name: true, categoryId: true, category: { select: { id: true, name: true } } },
       orderBy: { name: 'asc' },
     });
     return products.map((p) => ({
       id: p.id,
       name: translateProductName(p.name, locale),
-      category: p.category ?? undefined,
+      category: p.category?.name ?? undefined,
     }));
+  }
+
+  async findAllCategories(): Promise<{ id: string; name: string }[]> {
+    return this.prisma.productCategory.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findProductsByCategory(categoryId: string): Promise<{ id: string; name: string }[]> {
+    return this.prisma.product.findMany({
+      where: { categoryId },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
   }
 
   async updateProductCategory(dto: UpdateProductCategoryDto): Promise<{ id: string; name: string; category?: string }> {
     const product = await this.prisma.product.findUnique({
       where: { id: dto.productId },
+      include: { category: true },
     });
     if (!product) throw new NotFoundException(`Product with id "${dto.productId}" not found`);
 
     const updated = await this.prisma.product.update({
       where: { id: dto.productId },
-      data: { category: dto.category },
-      select: { id: true, name: true, category: true },
+      data: { categoryId: dto.categoryId },
+      select: { id: true, name: true, categoryId: true, category: { select: { id: true, name: true } } },
     });
     return {
       id: updated.id,
       name: updated.name,
-      category: updated.category ?? undefined,
+      category: updated.category?.name ?? undefined,
     };
   }
 
@@ -459,5 +508,53 @@ async findByBBox(bbox: BBoxQuery): Promise<MapMarkerLight[]> {
       orderBy: { name: 'asc' },
     });
     return products;
+  }
+
+  // ── PRODUCT CRUD ────────────────────────────────────────────────────────
+
+  async createProduct(dto: CreateProductDto): Promise<{ id: string; name: string; category: string }> {
+    const existing = await this.prisma.product.findUnique({ where: { name: dto.name } });
+    if (existing) {
+      throw new ConflictException(`Product "${dto.name}" already exists`);
+    }
+    const created = await this.prisma.product.create({
+      data: { name: dto.name, categoryId: dto.categoryId },
+      select: { id: true, name: true, categoryId: true, category: { select: { id: true, name: true } } },
+    });
+    return { id: created.id, name: created.name, category: created.category.name };
+  }
+
+  async updateProduct(
+    productId: string,
+    dto: UpdateProductDto,
+  ): Promise<{ id: string; name: string; category: string }> {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) throw new NotFoundException(`Product with id "${productId}" not found`);
+    if (dto.name && dto.name !== product.name) {
+      const existing = await this.prisma.product.findUnique({ where: { name: dto.name } });
+      if (existing) {
+        throw new ConflictException(`Product "${dto.name}" already exists`);
+      }
+    }
+    const updated = await this.prisma.product.update({
+      where: { id: productId },
+      data: {
+        ...(dto.name !== undefined && { name: dto.name }),
+        ...(dto.categoryId !== undefined && { categoryId: dto.categoryId }),
+      },
+      select: { id: true, name: true, categoryId: true, category: { select: { id: true, name: true } } },
+    });
+    return { id: updated.id, name: updated.name, category: updated.category.name };
+  }
+
+  async deleteProduct(productId: string): Promise<{ message: string }> {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+    });
+    if (!product) throw new NotFoundException(`Product with id "${productId}" not found`);
+    await this.prisma.product.delete({ where: { id: productId } });
+    return { message: `Product "${product.name}" deleted` };
   }
 }

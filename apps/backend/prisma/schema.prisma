@@ -47,16 +47,23 @@ model FarmType {
   @@map("farm_types")
 }
 
+model ProductCategory {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+
+  @@map("product_categories")
+}
+
 model Product {
-  id       String          @id @default(cuid())
-  name     String          @unique
-  category ProductCategory @default(other)
-  farms    FarmProduct[]
+  id         String          @id @default(cuid())
+  name       String          @unique
+  categoryId String
+  category   ProductCategory @relation(fields: [categoryId], references: [id])
+  farms      FarmProduct[]
 
   @@map("products")
 }
-
-
 
 model FarmProduct {
   farmId    String
@@ -156,18 +163,6 @@ model Suggestion {
   @@index([status])
   @@map("suggestions")
 }
-
-enum ProductCategory {
-  milk
-  fruit
-  vegetable
-  honey
-  egg
-  meat
-  other
-}
-
-
 
 enum Weekday {
   monday

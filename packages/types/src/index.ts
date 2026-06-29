@@ -1,8 +1,9 @@
-export type ProductCategory = 'milk' | 'fruit' | 'vegetable' | 'honey' | 'egg' | 'meat' | 'other';
+/** ProductCategory is now a model (table), these are the default names */
+export const PRODUCT_CATEGORY_NAMES = ['milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'] as const;
 
-export const PRODUCT_CATEGORIES: ProductCategory[] = ['milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'];
+export type ProductCategoryName = (typeof PRODUCT_CATEGORY_NAMES)[number];
 
-export const CATEGORY_LABELS: Record<ProductCategory, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   milk: 'Milk',
   fruit: 'Fruit',
   vegetable: 'Vegetable',
@@ -26,7 +27,8 @@ export interface OpeningHourEntry {
 export interface ProductInfo {
   id: string;
   name: string;
-  category?: ProductCategory;
+  category?: string;
+  categoryId?: string;
 }
 
 export type PaymentMethod = string;

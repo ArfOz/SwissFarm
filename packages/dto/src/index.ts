@@ -1,4 +1,4 @@
-import { CreateFarmInput, FarmType, OpeningHourEntry, PaymentMethod, ProductCategory, UpdateFarmInput } from '@swissfarm/types';
+import { CreateFarmInput, FarmType, OpeningHourEntry, PaymentMethod, UpdateFarmInput } from '@swissfarm/types';
 
 export { CreateAdminDto, LoginDto } from './auth';
 
@@ -32,5 +32,15 @@ export class UpdateFarmDto implements UpdateFarmInput {
 
 export class UpdateProductCategoryDto {
   productId!: string;
-  category!: ProductCategory;
+  categoryId!: string;
+}
+
+export class CreateProductDto {
+  name!: string;
+  categoryId!: string;
+}
+
+export class UpdateProductDto {
+  name?: string;
+  categoryId?: string;
 }

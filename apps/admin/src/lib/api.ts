@@ -59,6 +59,12 @@ export async function fetchProducts(): Promise<{ id: string; name: string }[]> {
   return res.json() as Promise<{ id: string; name: string }[]>;
 }
 
+export async function fetchPublicCategories(): Promise<{ id: string; name: string }[]> {
+  const res = await fetch(`${API_URL}/admin/farms/products/categories`, { cache: 'no-store' });
+  if (!res.ok) return [];
+  return res.json() as Promise<{ id: string; name: string }[]>;
+}
+
 export async function fetchDashboardStats(): Promise<DashboardStats> {
   const [farms, types, cantons] = await Promise.all([
     fetchFarms(),
@@ -118,23 +124,60 @@ export async function deleteFarm(id: string): Promise<void> {
 // ── PRODUCT CATEGORIES ─────────────────────────────────────────────────────
 
 export async function fetchAllProducts(): Promise<{ id: string; name: string; category?: string }[]> {
-  const res = await authFetch(`${API_URL}/admin/farms/products`, { cache: 'no-store' });
+  const res = await authFetch(`${API_URL}/admin/farms/products`, {
+    cache: 'no-store',
+    headers: { ...getAuthHeaders() },
+  });
   if (!res.ok) throw new Error(`Failed to fetch products: ${res.statusText}`);
   return res.json() as Promise<{ id: string; name: string; category?: string }[]>;
 }
 
-export async function fetchProductCategories(): Promise<string[]> {
-  const res = await authFetch(`${API_URL}/admin/farms/products/categories`, { cache: 'no-store' });
+export async function fetchProductCategories(): Promise<{ id: string; name: string }[]> {
+  const res = await authFetch(`${API_URL}/admin/farms/products/categories`, {
+    cache: 'no-store',
+    headers: { ...getAuthHeaders() },
+  });
   if (!res.ok) throw new Error(`Failed to fetch categories: ${res.statusText}`);
-  return res.json() as Promise<string[]>;
+  return res.json() as Promise<{ id: string; name: string }[]>;
 }
 
-export async function updateProductCategory(productId: string, category: string): Promise<{ id: string; name: string; category?: string }> {
+export async function updateProductCategory(productId: string, categoryId: string): Promise<{ id: string; name: string; category?: string }> {
   const res = await authFetch(`${API_URL}/admin/farms/products/category`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-    body: JSON.stringify({ productId, category }),
+    body: JSON.stringify({ productId, categoryId }),
   });
   if (!res.ok) throw new Error(`Failed to update product category: ${res.statusText}`);
   return res.json() as Promise<{ id: string; name: string; category?: string }>;
+}
+
+// ── PRODUCT CRUD ─────────────────────────────────────────────────────────
+
+export async function createProduct(name: string, categoryId: string): Promise<{ id: string; name: string; category: string }> {
+  const res = await authFetch(`${API_URL}/admin/farms/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify({ name, categoryId }),
+  });
+  if (!res.ok) throw new Error(`Failed to create product: ${res.statusText}`);
+  return res.json() as Promise<{ id: string; name: string; category: string }>;
+}
+
+export async function updateProduct(productId: string, data: { name?: string; categoryId?: string }): Promise<{ id: string; name: string; category: string }> {
+  const res = await authFetch(`${API_URL}/admin/farms/products/${encodeURIComponent(productId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Failed to update product: ${res.statusText}`);
+  return res.json() as Promise<{ id: string; name: string; category: string }>;
+}
+
+export async function deleteProduct(productId: string): Promise<{ message: string }> {
+  const res = await authFetch(`${API_URL}/admin/farms/products/${encodeURIComponent(productId)}`, {
+    method: 'DELETE',
+    headers: { ...getAuthHeaders() },
+  });
+  if (!res.ok) throw new Error(`Failed to delete product: ${res.statusText}`);
+  return res.json() as Promise<{ message: string }>;
 }

@@ -11,10 +11,10 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { Farm, FarmType, ProductCategory, PRODUCT_CATEGORIES } from '@swissfarm/types';
+import { Farm, FarmType, PRODUCT_CATEGORY_NAMES } from '@swissfarm/types';
 import { Locale } from '../i18n/translations';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
-import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
 import { FarmsService } from './farms.service';
 
 @Controller('admin/farms')
@@ -114,12 +114,38 @@ export class FarmsAdminController {
     return this.farmsService.removeProductFromFarm(farmId, productId, (locale as Locale) ?? 'en');
   }
 
+  // ── PRODUCT CRUD ────────────────────────────────────────────────────────
+
+  @AdminOnly()
+  @Post('products')
+  @HttpCode(201)
+  createProduct(@Body() dto: CreateProductDto): Promise<{ id: string; name: string; category: string }> {
+    return this.farmsService.createProduct(dto);
+  }
+
+  @AdminOnly()
+  @Patch('products/:productId')
+  @HttpCode(200)
+  updateProduct(
+    @Param('productId') productId: string,
+    @Body() dto: UpdateProductDto,
+  ): Promise<{ id: string; name: string; category: string }> {
+    return this.farmsService.updateProduct(productId, dto);
+  }
+
+  @AdminOnly()
+  @Delete('products/:productId')
+  @HttpCode(200)
+  deleteProduct(@Param('productId') productId: string): Promise<{ message: string }> {
+    return this.farmsService.deleteProduct(productId);
+  }
+
   // ── PRODUCT CATEGORY MANAGEMENT ─────────────────────────────────────────
 
   @AdminOnly()
   @Get('products/categories')
-  getCategories(): ProductCategory[] {
-    return PRODUCT_CATEGORIES;
+  getCategories(): Promise<{ id: string; name: string }[]> {
+    return this.farmsService.findAllCategories();
   }
 
   @AdminOnly()

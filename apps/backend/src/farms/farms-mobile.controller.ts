@@ -23,8 +23,11 @@ export class FarmsMobileController {
   /** Lightweight list — only map markers (id, name, lat, lng, canton, types) */
   @Public()
   @Get('map')
-  findAllForMap(): Promise<MapMarkerLight[]> {
-    return this.farmsService.findAllForMap();
+  findAllForMap(
+    @Query('categoryIds') categoryIds?: string,
+  ): Promise<MapMarkerLight[]> {
+    const parsed = categoryIds ? categoryIds.split(',').map((c) => c.trim()).filter(Boolean) : undefined;
+    return this.farmsService.findAllForMap(parsed);
   }
 
   /**
@@ -38,6 +41,8 @@ export class FarmsMobileController {
     @Query('southWestLng') southWestLng: string,
     @Query('northEastLat') northEastLat: string,
     @Query('northEastLng') northEastLng: string,
+    @Query('categoryIds') categoryIds?: string,
+    @Query('productIds') productIds?: string,
   ): Promise<MapMarkerLight[]> {
     const swLat = parseFloat(southWestLat);
     const swLng = parseFloat(southWestLng);
@@ -58,7 +63,9 @@ export class FarmsMobileController {
     };
 
     this.logger.log(`BBOX query: ${JSON.stringify(bbox)}`);
-    return this.farmsService.findByBBox(bbox);
+    const parsedCategories = categoryIds ? categoryIds.split(',').map((c) => c.trim()).filter(Boolean) : undefined;
+    const parsedProducts = productIds ? productIds.split(',').map((p) => p.trim()).filter(Boolean) : undefined;
+    return this.farmsService.findByBBox(bbox, parsedCategories, parsedProducts);
   }
 
   @Public()
@@ -101,6 +108,13 @@ export class FarmsMobileController {
     return this.farmsService.findNearby(latNum, lngNum, radiusNum, (locale as Locale) ?? 'en');
   }
 
+  /** Get products by category */
+  @Public()
+  @Get('products/by-category/:categoryId')
+  getProductsByCategory(@Param('categoryId') categoryId: string): Promise<{ id: string; name: string }[]> {
+    return this.farmsService.findProductsByCategory(categoryId);
+  }
+
   /** Filter (for mobile) */
   @Public()
   @HttpCode(200)
@@ -112,6 +126,7 @@ export class FarmsMobileController {
       brokenLocation?: boolean;
       productIds?: string[];
       productNames?: string[];
+      categoryIds?: string[];
     },
     @Query('locale') locale?: string,
   ): Promise<Farm[]> {
@@ -119,6 +134,7 @@ export class FarmsMobileController {
       brokenLocation: filterDto.brokenLocation,
       productIds: filterDto.productIds,
       productNames: filterDto.productNames,
+      categoryIds: filterDto.categoryIds,
     });
   }
 

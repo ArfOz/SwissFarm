@@ -18,23 +18,33 @@ export interface BBoxParams {
   northEastLng: number;
 }
 
-/** GET /mobile/farms/map — lightweight map markers */
-export async function getFarmsForMap(): Promise<MapMarker[]> {
-  const response = await apiClient.get<MapMarker[]>('/mobile/farms/map');
+/** GET /mobile/farms/map — lightweight map markers (optionally filtered by categoryIds) */
+export async function getFarmsForMap(categoryIds?: string[]): Promise<MapMarker[]> {
+  const response = await apiClient.get<MapMarker[]>('/mobile/farms/map', {
+    params: {
+      ...(categoryIds && categoryIds.length > 0 ? { categoryIds: categoryIds.join(',') } : {}),
+    },
+  });
   return response.data;
 }
 
 /**
  * GET /mobile/farms/bbox — lightweight map markers inside the given bounding box.
- * This is the viewport-based lazy loading endpoint.
  */
-export async function getFarmsByBBox(bbox: BBoxParams, signal?: AbortSignal): Promise<MapMarker[]> {
+export async function getFarmsByBBox(
+  bbox: BBoxParams,
+  signal?: AbortSignal,
+  categoryIds?: string[],
+  productIds?: string[],
+): Promise<MapMarker[]> {
   const response = await apiClient.get<MapMarker[]>('/mobile/farms/bbox', {
     params: {
       southWestLat: bbox.southWestLat,
       southWestLng: bbox.southWestLng,
       northEastLat: bbox.northEastLat,
       northEastLng: bbox.northEastLng,
+      ...(categoryIds && categoryIds.length > 0 ? { categoryIds: categoryIds.join(',') } : {}),
+      ...(productIds && productIds.length > 0 ? { productIds: productIds.join(',') } : {}),
     },
     signal,
   });
@@ -90,5 +100,27 @@ export async function searchFarms(query: string): Promise<Farm[]> {
   const q = query.trim();
   if (!q) return getFarms();
   const response = await apiClient.get<Farm[]>('/mobile/farms/search', { params: { q } });
+  return response.data;
+}
+
+/** GET /mobile/farms/products/by-category/:categoryId — get products in a category */
+export async function getProductsByCategory(categoryId: string): Promise<{ id: string; name: string }[]> {
+  const response = await apiClient.get<{ id: string; name: string }[]>(`/mobile/farms/products/by-category/${categoryId}`);
+  return response.data;
+}
+
+/** POST /mobile/farms/filter — filter by types, categoryIds, productIds */
+export async function filterFarms(params: {
+  types?: string[];
+  categoryIds?: string[];
+  productIds?: string[];
+}): Promise<Farm[]> {
+  const response = await apiClient.post<Farm[]>('/mobile/farms/filter', params);
+  return response.data;
+}
+
+/** GET /admin/farms/products/categories — get all product categories */
+export async function getCategories(): Promise<{ id: string; name: string }[]> {
+  const response = await apiClient.get<{ id: string; name: string }[]>('/admin/farms/products/categories');
   return response.data;
 }
