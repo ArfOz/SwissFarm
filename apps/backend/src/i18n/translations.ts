@@ -1,12 +1,6 @@
-export type Locale = 'en' | 'de' | 'fr';
+import { Locale, SUPPORTED_LOCALES, LOCALE_LABELS, DynamicTranslations } from '@swissfarm/types';
 
-export const SUPPORTED_LOCALES: Locale[] = ['en', 'de', 'fr'];
-
-export const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  de: 'Deutsch',
-  fr: 'Français',
-};
+export { Locale, SUPPORTED_LOCALES, LOCALE_LABELS };
 
 // ── Payment Methods ──────────────────────────────────────────────────────────
 
@@ -149,6 +143,31 @@ export const uiTranslations: Record<string, Record<Locale, string>> = {
 
   // Confirmations
   'farms.confirmDelete': { en: 'Are you sure you want to delete "{name}"?', de: 'Sind Sie sicher, dass Sie "{name}" löschen möchten?', fr: 'Êtes-vous sûr de vouloir supprimer "{name}" ?' },
+
+  // Settings (used by mobile)
+  'settings.title':    { en: 'Settings',           de: 'Einstellungen',      fr: 'Paramètres' },
+  'settings.subtitle': { en: 'Customize your app experience', de: 'Passe deine App-Erfahrung an', fr: 'Personnalisez votre expérience' },
+  'settings.language': { en: 'Language',            de: 'Sprache',             fr: 'Langue' },
+  'settings.languageDescription': { en: 'Choose your preferred language', de: 'Wähle deine bevorzugte Sprache', fr: 'Choisissez votre langue préférée' },
+  'settings.about':    { en: 'About',               de: 'Über',                fr: 'À propos' },
+  'settings.version':  { en: 'Version',             de: 'Version',             fr: 'Version' },
+  'settings.appName':  { en: 'App Name',            de: 'App-Name',            fr: "Nom de l'application" },
+  'settings.tapForDetails': { en: 'Tap for details', de: 'Tippen für Details', fr: 'Appuyez pour plus de détails' },
+
+  // Suggestions (used by mobile)
+  'suggest.title':     { en: 'Suggest',             de: 'Vorschlagen',        fr: 'Suggérer' },
+  'suggest.button':    { en: '💡 Suggest',         de: '💡 Vorschlagen',    fr: '💡 Suggérer' },
+  'suggest.author':    { en: 'Your name',           de: 'Dein Name',           fr: 'Votre nom' },
+  'suggest.email':     { en: 'Email (optional)',    de: 'E-Mail (optional)',   fr: 'Email (optionnel)' },
+  'suggest.message':   { en: 'Your suggestion *',   de: 'Dein Vorschlag *',    fr: 'Votre suggestion *' },
+  'suggest.gallery':   { en: '🖼 Gallery',         de: '🖼 Galerie',         fr: '🖼 Galerie' },
+  'suggest.camera':    { en: '📷 Take Photo',      de: '📷 Foto machen',     fr: '📷 Prendre une photo' },
+  'suggest.remove':    { en: 'Remove',              de: 'Entfernen',           fr: 'Supprimer' },
+  'suggest.submit':    { en: 'Send',                de: 'Senden',              fr: 'Envoyer' },
+  'suggest.success':   { en: 'Thank you! Your suggestion has been sent.', de: 'Danke! Dein Vorschlag wurde gesendet.', fr: 'Merci ! Votre suggestion a été envoyée.' },
+  'suggest.error':     { en: 'Could not send. Please try again.', de: 'Konnte nicht senden. Bitte versuche es erneut.', fr: "Impossible d'envoyer. Veuillez réessayer." },
+  'suggest.required':  { en: 'Please write a suggestion.', de: 'Bitte schreibe einen Vorschlag.', fr: 'Veuillez écrire une suggestion.' },
+  'suggest.permission': { en: 'Camera permission required', de: 'Kamera-Berechtigung erforderlich', fr: 'Autorisation de la caméra requise' },
 
   // Errors
   'common.error':      { en: 'An error occurred',  de: 'Ein Fehler ist aufgetreten', fr: 'Une erreur est survenue' },

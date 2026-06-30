@@ -1,329 +1,117 @@
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity, ActivityIndicator, Platform, Dimensions, ScrollView, type NativeSyntheticEvent } from 'react-native';
-import * as Location from 'expo-location';
-import { Map, Marker, Camera, CameraRef, MapRef, ViewStateChangeEvent } from '@maplibre/maplibre-react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, StatusBar } from 'react-native';
+import { Map, Marker, Camera } from '@maplibre/maplibre-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import Supercluster from 'supercluster';
-import throttle from 'lodash.throttle';
-import { getFarmsByBBox, getFarmById, getFarmsForMap, getProductsByCategory, MapMarker } from '../api/farms';
-import type { Farm } from '@swissfarm/types';
 import { t } from '../i18n/translations';
 import type { RootStackParamList } from '../navigation/RootNavigator';
+import { useMapState, PointFeature } from '../hooks/useMapState';
+import { MapHeader } from '../components/MapHeader';
+import { MapLocationButton } from '../components/MapLocationButton';
 
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty';
-
-const CATEGORY_NAMES = ['all', 'milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'] as const;
-const CATEGORY_LABELS: Record<string, string> = {
-  all: '🏠 All',
-  milk: '🥛 Milk', fruit: '🍎 Fruit', vegetable: '🥬 Vegetable',
-  honey: '🍯 Honey', egg: '🥚 Egg', meat: '🥩 Meat', other: '❓ Other',
-};
-const CATEGORY_IDS: Record<string, string> = {
-  milk: 'cat_milk', fruit: 'cat_fruit', vegetable: 'cat_vegetable',
-  honey: 'cat_honey', egg: 'cat_egg', meat: 'cat_meat', other: 'cat_other',
-};
-
-interface ClusterProperties { cluster: boolean; cluster_id: number; point_count: number; point_count_abbreviated: number; id?: string; }
-interface PointFeature { type: 'Feature'; geometry: { type: 'Point'; coordinates: [number, number] }; properties: ClusterProperties; }
-type Region = { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number; };
+const STATUS_BAR_HEIGHT = 0; // not used directly here
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+function renderMarkers(
+  features: PointFeature[],
+  markersRef: React.MutableRefObject<any[]>,
+  selectedFarmId: string | undefined,
+  onMarkerPress: (m: any) => void,
+  onClusterPress: (f: PointFeature) => void,
+) {
+  return features.map((f) => {
+    const { cluster, cluster_id, id, point_count } = f.properties;
+    const [lng, lat] = f.geometry.coordinates;
+    if (cluster) return (
+      <Marker key={`c-${cluster_id}`} id={`c-${cluster_id}`} lngLat={[lng, lat]} anchor="center" onPress={() => onClusterPress(f)}>
+        <View style={styles.clusterBubble}><Text style={styles.clusterText}>{point_count}</Text></View>
+      </Marker>
+    );
+    const m = markersRef.current.find((x: any) => x.id === id);
+    if (!m) return null;
+    return (
+      <Marker key={m.id} id={m.id} lngLat={[m.location.lng, m.location.lat]} anchor="center" onPress={() => onMarkerPress(m)}>
+        <View style={[styles.pin, selectedFarmId === m.id && styles.pinSelected]} />
+      </Marker>
+    );
+  });
+}
 
 export default function FarmsMapScreen() {
   const navigation = useNavigation<NavigationProp>();
-  const [markers, setMarkers] = useState<MapMarker[]>([]);
-  const [features, setFeatures] = useState<PointFeature[]>([]);
-  const [selectedFarm, setSelectedFarm] = useState<Farm | null>(null);
-  const [selectedLoading, setSelectedLoading] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showPanel, setShowPanel] = useState(false);
-  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
-  const [selectedProductIds, setSelectedProductIds] = useState<Set<string>>(new Set());
-  const [productsLoading, setProductsLoading] = useState(false);
-  const [filterLoading, setFilterLoading] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const state = useMapState(navigation);
 
-  const mapRef = useRef<MapRef>(null);
-  const cameraRef = useRef<CameraRef>(null);
-  const superclusterRef = useRef<Supercluster | null>(null);
-  const markersRef = useRef<MapMarker[]>([]);
-  const readyRef = useRef(false);
-
-  // Keep markersRef in sync
-  useEffect(() => { markersRef.current = markers; }, [markers]);
-
-  const getSC = useCallback(() => {
-    if (!superclusterRef.current) {
-      superclusterRef.current = new Supercluster({ radius: 120, minPoints: 3, maxZoom: 16, extent: 512, nodeSize: 64 });
+  const handleCategoryPress = (cat: string) => {
+    if (cat === state.selectedCategory) {
+      state.setShowProductFilter(!state.showProductFilter);
+    } else {
+      state.handleCategorySelect(cat, cat !== 'all');
     }
-    return superclusterRef.current;
-  }, []);
-
-  // Rebuild supercluster when markers change (but keep features in sync via updateClusters)
-  useEffect(() => {
-    const sc = getSC();
-    if (markers.length === 0) { sc.load([]); setFeatures([]); return; }
-    sc.load(markers.map((m) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [m.location.lng, m.location.lat] },
-      properties: { cluster: false, cluster_id: 0, point_count: 0, point_count_abbreviated: 0, id: m.id },
-    })));
-    readyRef.current = true;
-  }, [markers, getSC]);
-
-  // Load products when category changes
-  useEffect(() => {
-    if (selectedCategory === 'all') {
-      setProducts([]);
-      setSelectedProductIds(new Set());
-      return;
-    }
-    const catId = CATEGORY_IDS[selectedCategory] || selectedCategory;
-    setSelectedProductIds(new Set());
-    setProductsLoading(true);
-    getProductsByCategory(catId)
-      .then(setProducts)
-      .catch(() => setProducts([]))
-      .finally(() => setProductsLoading(false));
-  }, [selectedCategory]);
-
-  const applyFilter = useCallback(async () => {
-    setFilterLoading(true);
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const catIds = selectedCategory !== 'all' ? [CATEGORY_IDS[selectedCategory] || selectedCategory] : undefined;
-      const prodIds = selectedProductIds.size > 0 ? Array.from(selectedProductIds) : undefined;
-      const data = await getFarmsForMap(prodIds ? undefined : catIds);
-      setMarkers(data);
-      setShowPanel(false);
-    } catch (e: any) {
-      if (e?.name !== 'CanceledError' && e?.name !== 'AbortError') console.warn('Fetch error', e);
-    } finally {
-      setFilterLoading(false);
-    }
-  }, [selectedCategory, selectedProductIds]);
-
-  const fetchMarkersForBounds = useCallback(async (bounds: {
-    southWestLat: number; southWestLng: number; northEastLat: number; northEastLng: number;
-  }) => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const catIds = selectedCategory !== 'all' ? [CATEGORY_IDS[selectedCategory] || selectedCategory] : undefined;
-      const prodIds = selectedProductIds.size > 0 ? Array.from(selectedProductIds) : undefined;
-      const data = await getFarmsByBBox(bounds, controller.signal, prodIds ? undefined : catIds, prodIds);
-      setMarkers(data);
-    } catch (e: any) {
-      if (e?.name !== 'CanceledError' && e?.name !== 'AbortError') console.warn('Map markers fetch error', e);
-    }
-  }, [selectedCategory, selectedProductIds]);
-
-  const debouncedFetchMarkers = useMemo(() =>
-    throttle((region: Region) => {
-      const swLat = region.latitude - region.latitudeDelta / 2;
-      const neLat = region.latitude + region.latitudeDelta / 2;
-      const swLng = region.longitude - region.longitudeDelta / 2;
-      const neLng = region.longitude + region.longitudeDelta / 2;
-      fetchMarkersForBounds({ southWestLat: swLat, southWestLng: swLng, northEastLat: neLat, northEastLng: neLng });
-    }, 400), [fetchMarkersForBounds]);
-
-  const updateClusters = useCallback((zoom: number, mb: { sw: [number, number]; ne: [number, number] }) => {
-    if (!readyRef.current) return;
-    const sc = getSC();
-    setFeatures(sc.getClusters([mb.sw[0], mb.sw[1], mb.ne[0], mb.ne[1]], Math.round(zoom)) as PointFeature[]);
-  }, [getSC]);
-
-  const throttledRef = useRef(throttle((zoom: number, mb: { sw: [number, number]; ne: [number, number] }, region: Region) => {
-    updateClusters(zoom, mb);
-    debouncedFetchMarkers(region);
-  }, 500));
-
-  const handleRegionDidChange = useCallback((e: NativeSyntheticEvent<ViewStateChangeEvent>) => {
-    const { zoom, center, bounds } = e.nativeEvent;
-    const mb = { sw: [bounds[0], bounds[1]] as [number, number], ne: [bounds[2], bounds[3]] as [number, number] };
-    throttledRef.current(zoom, mb, {
-      latitude: center[1], longitude: center[0],
-      latitudeDelta: bounds[3] - bounds[1], longitudeDelta: bounds[2] - bounds[0],
-    });
-  }, [updateClusters, debouncedFetchMarkers]);
-
-  const handleMarkerPress = useCallback(async (marker: MapMarker) => {
-    setSelectedLoading(true);
-    try {
-      const farm = await getFarmById(marker.id);
-      setSelectedFarm(farm);
-      cameraRef.current?.flyTo({ center: [marker.location.lng, marker.location.lat] as [number, number], zoom: 13, duration: 400 });
-    } catch (e) { console.warn('Farm detail fetch error', e); }
-    finally { setSelectedLoading(false); }
-  }, []);
-
-  const handleClusterPress = useCallback(async (feature: PointFeature) => {
-    const clusterId = feature.properties.cluster_id;
-    if (clusterId === undefined) return;
-    const sc = getSC();
-    let ez: number;
-    try { ez = sc.getClusterExpansionZoom(clusterId); } catch { ez = 12; }
-    const cz = await mapRef.current?.getZoom() ?? 7;
-    const targetZoom = Math.min(Math.max(ez, cz + 1), 16);
-    const [lng, lat] = feature.geometry.coordinates;
-    // Just fly — onRegionDidChange will fetch markers and update clusters
-    cameraRef.current?.flyTo({ center: [lng, lat], zoom: targetZoom, duration: 500 });
-  }, [getSC]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-          setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-        }
-      } catch {}
-    })();
-  }, []);
-
-  const handleMyLocation = useCallback(async () => {
-    setLocationLoading(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      setUserLocation({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-      cameraRef.current?.flyTo({ center: [loc.coords.longitude, loc.coords.latitude] as [number, number], zoom: 13, duration: 600 });
-    } catch (e) { console.warn(e); }
-    finally { setLocationLoading(false); }
-  }, []);
-
-  const handleCardPress = useCallback(() => {
-    if (selectedFarm) navigation.navigate('FarmDetails', { farm: selectedFarm });
-  }, [selectedFarm, navigation]);
-
-  const handleCategorySelect = (cat: string) => { setSelectedCategory(cat); setSelectedProductIds(new Set()); };
-  const toggleProduct = (productId: string) => {
-    setSelectedProductIds((prev) => { const n = new Set(prev); n.has(productId) ? n.delete(productId) : n.add(productId); return n; });
   };
-
-  const initialViewState = useMemo(() => ({ center: [8.2275, 46.8182] as [number, number], zoom: 7 }), []);
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.filterToggle} onPress={() => setShowPanel(!showPanel)}>
-        <Text style={styles.filterToggleText}>☰</Text>
-      </TouchableOpacity>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-      {showPanel && (
-        <View style={styles.sidePanel}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sidePanelContent}>
-            <Text style={styles.sidePanelTitle}>Filter by Category</Text>
-            {CATEGORY_NAMES.map((cat) => (
-              <TouchableOpacity key={cat}
-                style={[styles.sideCategoryItem, selectedCategory === cat && styles.sideCategoryItemSelected]}
-                onPress={() => handleCategorySelect(cat)}>
-                <Text style={[styles.sideCategoryText, selectedCategory === cat && styles.sideCategoryTextSelected]}>
-                  {CATEGORY_LABELS[cat] || cat}</Text>
-              </TouchableOpacity>
-            ))}
-            {selectedCategory !== 'all' && (
-              <>
-                <View style={styles.productsDivider} />
-                <Text style={styles.productsTitle}>Products ({selectedProductIds.size} selected)</Text>
-                {productsLoading ? <ActivityIndicator size="small" color="#2e7d32" style={{ marginTop: 8 }} />
-                : products.length === 0 ? <Text style={styles.noProducts}>No products found</Text>
-                : products.map((p) => (
-                  <TouchableOpacity key={p.id}
-                    style={[styles.productItem, selectedProductIds.has(p.id) && styles.productItemSelected]}
-                    onPress={() => toggleProduct(p.id)}>
-                    <Text style={[styles.productText, selectedProductIds.has(p.id) && styles.productTextSelected]}>
-                      {selectedProductIds.has(p.id) ? '☑' : '○'} {p.name}</Text>
-                  </TouchableOpacity>
-                ))}
-                <Text style={styles.sidePanelHint}>
-                  {selectedProductIds.size > 0 ? `${selectedProductIds.size} product(s) selected` : 'Tap products to filter'}</Text>
-              </>
-            )}
-            <TouchableOpacity style={styles.applyBtn} onPress={applyFilter} disabled={filterLoading}>
-              {filterLoading ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.applyBtnText}>{selectedCategory === 'all' ? 'Show All Farms' : `Apply Filter (${selectedProductIds.size || 'all'})`}</Text>}
-            </TouchableOpacity>
-          </ScrollView>
+      <MapHeader
+        selectedCategory={state.selectedCategory}
+        showProductFilter={state.showProductFilter}
+        products={state.products}
+        productsLoading={state.productsLoading}
+        selectedProductIds={state.selectedProductIds}
+        filterLoading={state.filterLoading}
+        onCategoryPress={handleCategoryPress}
+        onToggleProduct={state.toggleProduct}
+        onApplyFilter={state.applyFilter}
+      />
+
+      {state.filterLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="small" color="#fff" />
         </View>
       )}
 
-      {filterLoading && <View style={styles.loadingOverlay}><ActivityIndicator size="small" color="#fff" /></View>}
-
-      <Map ref={mapRef} style={styles.map} mapStyle={MAP_STYLE} onRegionDidChange={handleRegionDidChange}>
-        <Camera ref={cameraRef} initialViewState={initialViewState} />
-        {userLocation && (
-          <Marker id="user-location" lngLat={[userLocation.lng, userLocation.lat]} anchor="center">
+      <Map ref={state.mapRef} style={styles.map} mapStyle={MAP_STYLE} onRegionDidChange={state.handleRegionDidChange}>
+        <Camera ref={state.cameraRef} initialViewState={state.initialViewState} />
+        {state.userLocation && (
+          <Marker id="user-location" lngLat={[state.userLocation.lng, state.userLocation.lat]} anchor="center">
             <View style={styles.userLocationDot}><View style={styles.userLocationInner} /></View>
           </Marker>
         )}
-        {features.map((f) => {
-          const { cluster, cluster_id, id, point_count } = f.properties;
-          const [lng, lat] = f.geometry.coordinates;
-          if (cluster) return (
-            <Marker key={`c-${cluster_id}`} id={`c-${cluster_id}`} lngLat={[lng, lat]} anchor="center" onPress={() => handleClusterPress(f)}>
-              <View style={styles.clusterBubble}><Text style={styles.clusterText}>{point_count}</Text></View>
-            </Marker>
-          );
-          const m = markersRef.current.find((x) => x.id === id);
-          if (!m) return null;
-          return (
-            <Marker key={m.id} id={m.id} lngLat={[m.location.lng, m.location.lat]} anchor="center" onPress={() => handleMarkerPress(m)}>
-              <View style={[styles.pin, selectedFarm?.id === m.id && styles.pinSelected]} />
-            </Marker>
-          );
-        })}
+        {renderMarkers(state.features, state.markersRef, state.selectedFarm?.id, state.handleMarkerPress, state.handleClusterPress)}
       </Map>
 
-      {(selectedLoading || selectedFarm) && (
-        <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={handleCardPress}>
-          {selectedLoading ? <View style={styles.cardLoading}><ActivityIndicator size="large" color="#e53935" /></View>
-          : <View style={styles.cardInfo}>
-              <Text style={styles.cardTitle} numberOfLines={1}>{selectedFarm!.name}</Text>
-              <Text style={styles.cardSubtitle} numberOfLines={1}>{selectedFarm!.address} · {selectedFarm!.canton}</Text>
-              <View style={styles.badgeRow}>{selectedFarm!.types.slice(0, 3).map((type) => (
+      {(state.selectedLoading || state.selectedFarm) && (
+        <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={state.handleCardPress}>
+          {state.selectedLoading ? (
+            <View style={styles.cardLoading}><ActivityIndicator size="large" color="#e53935" /></View>
+          ) : (
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardTitle} numberOfLines={1}>{state.selectedFarm!.name}</Text>
+              <Text style={styles.cardSubtitle} numberOfLines={1}>{state.selectedFarm!.address} · {state.selectedFarm!.canton}</Text>
+              <View style={styles.badgeRow}>{state.selectedFarm!.types.slice(0, 3).map((type: string) => (
                 <View key={type} style={styles.badge}><Text style={styles.badgeText}>{t(`type.${type}`)}</Text></View>
               ))}</View>
               <Text style={styles.cardHint}>{t('settings.tapForDetails')}</Text>
-            </View>}
+            </View>
+          )}
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={[styles.locationBtn, { bottom: Dimensions.get('window').height * 0.06 + 16 }]} activeOpacity={0.8} onPress={handleMyLocation} disabled={locationLoading}>
-        {locationLoading ? <ActivityIndicator size="small" color="#1976d2" /> : <Text style={styles.locationIcon}>🎯</Text>}
-      </TouchableOpacity>
+      <MapLocationButton loading={state.locationLoading} onPress={state.handleMyLocation} disabled={state.locationLoading} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 }, map: { flex: 1 },
-  filterToggle: { position: 'absolute', top: Platform.OS === 'android' ? 10 : 60, left: 12, width: 44, height: 44, borderRadius: 22, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', zIndex: 200, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 6 },
-  filterToggleText: { fontSize: 22, fontWeight: '700', color: '#333' },
-  loadingOverlay: { position: 'absolute', top: Platform.OS === 'android' ? 10 : 60, left: 64, right: 64, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 150 },
-  sidePanel: { position: 'absolute', top: Platform.OS === 'android' ? 10 : 60, left: 64, width: 280, maxHeight: '80%', backgroundColor: '#fff', borderRadius: 16, zIndex: 200, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 8, overflow: 'hidden' },
-  sidePanelContent: { padding: 16, paddingBottom: 8 },
-  sidePanelTitle: { fontSize: 15, fontWeight: '700', color: '#222', marginBottom: 12 },
-  sideCategoryItem: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, marginBottom: 4 },
-  sideCategoryItemSelected: { backgroundColor: '#2e7d32' },
-  sideCategoryText: { fontSize: 14, fontWeight: '600', color: '#444' },
-  sideCategoryTextSelected: { color: '#fff' },
-  productsDivider: { height: 1, backgroundColor: '#eee', marginVertical: 12 },
-  productsTitle: { fontSize: 13, fontWeight: '700', color: '#666', marginBottom: 8, textTransform: 'uppercase' },
-  noProducts: { fontSize: 12, color: '#999', marginTop: 4, textAlign: 'center' },
-  productItem: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, marginBottom: 2 },
-  productItemSelected: { backgroundColor: '#e8f5e9' },
-  productText: { fontSize: 13, color: '#555' },
-  productTextSelected: { color: '#2e7d32', fontWeight: '700' },
-  sidePanelHint: { fontSize: 11, color: '#aaa', marginTop: 12, textAlign: 'center' },
-  applyBtn: { backgroundColor: '#2e7d32', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, alignItems: 'center', marginTop: 12 },
-  applyBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  map: { flex: 1 },
+  loadingOverlay: {
+    position: 'absolute', left: 16, right: 16, top: 60, height: 36,
+    borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center', zIndex: 999,
+  },
   clusterBubble: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#222', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 5 },
   clusterText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   pin: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#e53935', borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 8 },
@@ -337,8 +125,6 @@ const styles = StyleSheet.create({
   badge: { backgroundColor: '#eef5ee', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   badgeText: { fontSize: 12, color: '#2e7d32', fontWeight: '600' },
   cardHint: { marginTop: 8, fontSize: 12, color: '#e53935', fontWeight: '600', textAlign: 'right' },
-  locationBtn: { position: 'absolute', right: 16, width: 48, height: 48, borderRadius: 24, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 8, zIndex: 100 },
-  locationIcon: { fontSize: 22 },
   userLocationDot: { width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(25, 118, 210, 0.2)', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#1976d2' },
   userLocationInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#1976d2' },
 });

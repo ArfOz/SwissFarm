@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateSuggestionDto {
@@ -29,20 +29,25 @@ export class SuggestionsService {
     });
   }
 
-  async findAll(status?: string) {
-    const where = status ? { status } : {};
+  async findAll(filters?: { status?: string; isRead?: boolean }) {
+    const where: Record<string, any> = {};
+    if (filters?.status) where.status = filters.status;
+    if (filters?.isRead !== undefined) where.isRead = filters.isRead;
+
     return this.prisma.suggestion.findMany({
       where,
       include: { farm: { select: { id: true, name: true } } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ isRead: 'asc' }, { createdAt: 'desc' }],
     });
   }
 
   async findOne(id: string) {
-    return this.prisma.suggestion.findUniqueOrThrow({
+    const suggestion = await this.prisma.suggestion.findUnique({
       where: { id },
-      include: { farm: { select: { id: true, name: true } } },
+      include: { farm: { select: { id: true, name: true, address: true, canton: true } } },
     });
+    if (!suggestion) throw new NotFoundException(`Suggestion ${id} not found`);
+    return suggestion;
   }
 
   async updateStatus(id: string, status: string) {
@@ -50,5 +55,26 @@ export class SuggestionsService {
       where: { id },
       data: { status },
     });
+  }
+
+  async markAsRead(id: string) {
+    return this.prisma.suggestion.update({
+      where: { id },
+      data: { isRead: true, readAt: new Date() },
+    });
+  }
+
+  async markAsUnread(id: string) {
+    return this.prisma.suggestion.update({
+      where: { id },
+      data: { isRead: false, readAt: null },
+    });
+  }
+
+  async getUnreadCount(): Promise<{ count: number }> {
+    const count = await this.prisma.suggestion.count({
+      where: { isRead: false },
+    });
+    return { count };
   }
 }

@@ -13,7 +13,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Farm, FarmType } from '@swissfarm/types';
-import { Locale } from '../i18n/translations';
+import { Locale } from '@swissfarm/types';
 import { Public } from '../libs/decorators/public.decorator';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
 import { CreateFarmDto, UpdateFarmDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';

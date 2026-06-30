@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Alert,
   Linking,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { Farm } from '@swissfarm/types';
+import { Farm, CATEGORY_LABELS, CATEGORY_ORDER } from '@swissfarm/types';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -26,11 +26,11 @@ function getTypeLabel(types: Farm['types']): string {
 }
 
 function formatOpeningHours(openingHours: Farm['openingHours']): string {
-  if (!openingHours || openingHours.length === 0) return t('farms.noProducts') || 'Not specified';
+  if (!openingHours || openingHours.length === 0) return 'Unknown';
   return openingHours
     .map((entry) => {
       const dayLabel = t(`day.${entry.day}`) || entry.day;
-      if (!entry.open || !entry.close) return `${dayLabel}: ${t('farms.form.close') || 'Closed'}`;
+      if (!entry.open || !entry.close) return `${dayLabel}: Unknown`;
       return `${dayLabel}: ${entry.open}–${entry.close}`;
     })
     .join('\n');
@@ -38,6 +38,16 @@ function formatOpeningHours(openingHours: Farm['openingHours']): string {
 
 function formatPaymentMethods(methods: Farm['paymentMethods']): string {
   return methods.map((m) => translatePaymentMethod(m)).join(', ');
+}
+
+function groupProductsByCategory(products: Farm['products']): Record<string, { id: string; name: string }[]> {
+  const grouped: Record<string, { id: string; name: string }[]> = {};
+  products.forEach((p) => {
+    const cat = p.category || 'other';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(p);
+  });
+  return grouped;
 }
 
 export default function FarmDetailsScreen({ route, navigation }: Props) {
@@ -64,6 +74,8 @@ export default function FarmDetailsScreen({ route, navigation }: Props) {
       Linking.openURL(farm.website);
     }
   }
+
+  const groupedProducts = useMemo(() => groupProductsByCategory(farm.products), [farm.products]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -99,29 +111,36 @@ export default function FarmDetailsScreen({ route, navigation }: Props) {
         </View>
       )}
 
-      {/* Products */}
+      {/* Products - grouped by category */}
       {farm.products.length > 0 && (
         <View style={styles.section}>
           <Text style={[typography.label, styles.sectionLabel]}>Products</Text>
-          <View style={styles.chips}>
-            {farm.products.map((p) => (
-              <View key={p.id} style={styles.chip}>
-                <Text style={[typography.bodySmall, styles.chipText]}>{p.name}</Text>
+          {CATEGORY_ORDER
+            .filter((cat) => groupedProducts[cat])
+            .map((cat) => (
+              <View key={cat} style={styles.productCategoryGroup}>
+                <Text style={styles.productCategoryTitle}>
+                  {CATEGORY_LABELS[cat] || cat}
+                </Text>
+                <View style={styles.chips}>
+                  {groupedProducts[cat].map((p: { id: string; name: string }) => (
+                    <View key={p.id} style={styles.chip}>
+                      <Text style={[typography.bodySmall, styles.chipText]}>{p.name}</Text>
+                    </View>
+                  ))}
+                </View>
               </View>
             ))}
-          </View>
         </View>
       )}
 
       {/* Opening Hours */}
-      {farm.openingHours && farm.openingHours.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[typography.label, styles.sectionLabel]}>Opening Hours</Text>
-          <Text style={[typography.body, styles.sectionValue]}>
-            {formatOpeningHours(farm.openingHours)}
-          </Text>
-        </View>
-      )}
+      <View style={styles.section}>
+        <Text style={[typography.label, styles.sectionLabel]}>Opening Hours</Text>
+        <Text style={[typography.body, styles.sectionValue]}>
+          {formatOpeningHours(farm.openingHours)}
+        </Text>
+      </View>
 
       {/* Website */}
       {farm.website && (
@@ -188,6 +207,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   chipText: { color: colors.textPrimary },
+  productCategoryGroup: {
+    marginBottom: spacing.sm,
+  },
+  productCategoryTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: spacing.xs,
+    marginTop: spacing.sm,
+  },
   link: { color: colors.info },
   mapsButton: {
     backgroundColor: colors.primary,

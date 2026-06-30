@@ -11,8 +11,8 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { Farm, FarmType, PRODUCT_CATEGORY_NAMES } from '@swissfarm/types';
-import { Locale } from '../i18n/translations';
+import { Farm, FarmType, CATEGORY_NAMES as PRODUCT_CATEGORY_NAMES } from '@swissfarm/types';
+import { Locale } from '@swissfarm/types';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
 import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
 import { FarmsService } from './farms.service';

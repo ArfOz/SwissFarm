@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
-import { Locale, getCurrentLocale, fetchTranslations } from './translations';
+import { Locale, getCurrentLocale, fetchTranslations, preloadAllTranslations } from './translations';
 
 interface LocaleContextType {
   locale: Locale;
@@ -16,6 +16,17 @@ const LocaleContext = createContext<LocaleContextType>({
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(getCurrentLocale());
   const [loading, setLoading] = useState(false);
+
+  // On mount: fetch current locale and preload all others into cache
+  useEffect(() => {
+    async function init() {
+      const current = getCurrentLocale();
+      await fetchTranslations(current);
+      // Preload remaining locales in background
+      preloadAllTranslations();
+    }
+    init();
+  }, []);
 
   const setLocale = useCallback(async (newLocale: Locale) => {
     setLoading(true);

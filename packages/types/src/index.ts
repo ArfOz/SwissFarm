@@ -1,16 +1,49 @@
-/** ProductCategory is now a model (table), these are the default names */
-export const PRODUCT_CATEGORY_NAMES = ['milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'] as const;
+// ── i18n / Locale types (shared between backend, admin, mobile) ────────────
 
-export type ProductCategoryName = (typeof PRODUCT_CATEGORY_NAMES)[number];
+export type Locale = 'en' | 'de' | 'fr';
+
+export const SUPPORTED_LOCALES: Locale[] = ['en', 'de', 'fr'];
+
+export const LOCALE_LABELS: Record<Locale, string> = {
+  en: 'English',
+  de: 'Deutsch',
+  fr: 'Français',
+};
+
+export interface DynamicTranslations {
+  farmTypes: Record<string, string>;
+  days: Record<string, string>;
+  ui: Record<string, string>;
+}
+
+// ── Product & Farm Types ───────────────────────────────────────────────────
+
+/** ProductCategory is now a model (table), these are the default names */
+export const CATEGORY_NAMES = ['all', 'milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'] as const;
+
+export type ProductCategoryName = (typeof CATEGORY_NAMES)[number];
 
 export const CATEGORY_LABELS: Record<string, string> = {
-  milk: 'Milk',
-  fruit: 'Fruit',
-  vegetable: 'Vegetable',
-  honey: 'Honey',
-  egg: 'Egg',
-  meat: 'Meat',
-  other: 'Other',
+  milk: '🥛 Milk',
+  fruit: '🍎 Fruit',
+  vegetable: '🥬 Vegetable',
+  honey: '🍯 Honey',
+  egg: '🥚 Egg',
+  meat: '🥩 Meat',
+  other: '❓ Other',
+  all: '🏠 All',
+};
+
+export const CATEGORY_ORDER = ['milk', 'fruit', 'vegetable', 'honey', 'egg', 'meat', 'other'];
+
+export const CATEGORY_IDS: Record<string, string> = {
+  milk: 'cat_milk',
+  fruit: 'cat_fruit',
+  vegetable: 'cat_vegetable',
+  honey: 'cat_honey',
+  egg: 'cat_egg',
+  meat: 'cat_meat',
+  other: 'cat_other',
 };
 
 export interface FarmLocation {

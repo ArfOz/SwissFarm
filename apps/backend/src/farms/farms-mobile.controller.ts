@@ -10,7 +10,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Farm, FarmType, FarmWithDistance } from '@swissfarm/types';
-import { Locale } from '../i18n/translations';
+import { Locale } from '@swissfarm/types';
 import { Public } from '../libs/decorators/public.decorator';
 import { FarmsService, MapMarkerLight, BBoxQuery } from './farms.service';
 
