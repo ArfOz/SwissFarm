@@ -1,7 +1,7 @@
 import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { Public } from '../libs/decorators/public.decorator';
 import { AuthService } from './auth.service';
-import { CreateAdminDto, LoginDto } from '@swissfarm/dto';
+import { CreateAdminDto, LoginDto } from '@helvetfarm/dto';
 
 @Controller('auth')
 export class AuthController {

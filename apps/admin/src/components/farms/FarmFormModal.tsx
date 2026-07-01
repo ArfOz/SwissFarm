@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Farm, PaymentMethod, ProductInfo, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@swissfarm/types';
+import { Farm, PaymentMethod, ProductInfo, CreateFarmInput, FARM_TYPES, FarmType, DAYS, DEFAULT_OPENING_HOURS, CANTONS, CANTON_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS } from '@helvetfarm/types';
 import { fetchProducts } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 

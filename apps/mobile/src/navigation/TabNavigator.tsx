@@ -6,10 +6,12 @@ import FarmsMapScreen from '../screens/FarmsMapScreen';
 import ContactScreen from '../screens/ContactScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import { colors } from '../theme/colors';
+import { t } from '../i18n/translations';
+import { useLocale } from '../i18n/LocaleContext';
 
 export type TabParamList = {
-  List: undefined;
-  Map: undefined; 
+  Map: undefined;
+  List: undefined; 
   Contact: undefined;
   Settings: undefined;
 };
@@ -17,6 +19,8 @@ export type TabParamList = {
 const Tab = createBottomTabNavigator<TabParamList>();
 
 export default function TabNavigator() {
+  // Re-render on locale change so tab labels update
+  useLocale();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -29,26 +33,26 @@ export default function TabNavigator() {
       }}
     >
       <Tab.Screen
-        name="List"
-        component={ListScreen}
-        options={{
-          tabBarLabel: 'List',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
-        }}
-      />
-      <Tab.Screen
         name="Map"
         component={FarmsMapScreen}
         options={{
-          tabBarLabel: 'Map',
+          tabBarLabel: t('tab.map'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🗺️</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="List"
+        component={ListScreen}
+        options={{
+          tabBarLabel: t('tab.list'),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📋</Text>,
         }}
       />
       <Tab.Screen
         name="Contact"
         component={ContactScreen}
         options={{
-          tabBarLabel: 'Contact',
+          tabBarLabel: t('tab.contact'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📬</Text>,
         }}
       />
@@ -56,7 +60,7 @@ export default function TabNavigator() {
         name="Settings"
         component={SettingsScreen}
         options={{
-          tabBarLabel: 'Settings',
+          tabBarLabel: t('tab.settings'),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>⚙️</Text>,
         }}
       />

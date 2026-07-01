@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import FarmDetailsScreen from '../screens/FarmDetailsScreen';
 import SuggestScreen from '../screens/SuggestScreen';
-import { Farm } from '@swissfarm/types';
+import { Farm } from '@helvetfarm/types';
 import { colors } from '../theme/colors';
 import { LocaleProvider } from '../i18n/LocaleContext';
 

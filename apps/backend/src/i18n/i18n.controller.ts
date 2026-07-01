@@ -1,5 +1,5 @@
 import { BadRequestException, Controller, Get, Param } from '@nestjs/common';
-import { Locale } from '@swissfarm/types';
+import { Locale } from '@helvetfarm/types';
 import { SUPPORTED_LOCALES, getTranslations, LOCALE_LABELS } from './translations';
 import { Public } from '../libs/decorators/public.decorator';
 

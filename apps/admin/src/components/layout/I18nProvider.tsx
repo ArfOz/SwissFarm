@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, ReactNode } from 'react';
-import { ProductInfo } from '@swissfarm/types';
+import { ProductInfo } from '@helvetfarm/types';
 import { I18nContext, Locale, DynamicTranslations, translate, translateProduct, translateProducts } from '@/lib/i18n';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3300/api';

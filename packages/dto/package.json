@@ -1,5 +1,5 @@
 {
-  "name": "@swissfarm/dto",
+  "name": "@helvetfarm/dto",
   "version": "0.0.1",
   "private": false,
   "main": "./src/index.ts",
@@ -12,7 +12,7 @@
   },
   "scripts": {},
   "dependencies": {
-    "@swissfarm/types": "workspace:*"
+    "@helvetfarm/types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

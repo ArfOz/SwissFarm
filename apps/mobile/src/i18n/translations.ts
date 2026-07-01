@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '../api/client';
-import { Locale, DynamicTranslations } from '@swissfarm/types';
+import { Locale, DynamicTranslations } from '@helvetfarm/types';
 
 export type { Locale, DynamicTranslations };
 

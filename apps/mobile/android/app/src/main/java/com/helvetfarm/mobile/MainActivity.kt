@@ -1,4 +1,4 @@
-package com.swissfarm.mobile
+package com.helvetfarm.mobile
 
 import android.os.Build
 import android.os.Bundle

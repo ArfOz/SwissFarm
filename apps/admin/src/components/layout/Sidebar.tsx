@@ -17,7 +17,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-green-800 text-white flex flex-col shrink-0">
       <div className="p-6 border-b border-green-700">
-        <h1 className="text-xl font-bold tracking-tight">🇨🇭 SwissFarm</h1>
+        <h1 className="text-xl font-bold tracking-tight">🇨🇭 HelvetFarm</h1>
         <p className="text-green-300 text-sm mt-1">Admin Panel</p>
       </div>
       <nav className="flex-1 p-4">

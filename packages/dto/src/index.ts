@@ -1,4 +1,4 @@
-import { CreateFarmInput, FarmType, OpeningHourEntry, PaymentMethod, UpdateFarmInput } from '@swissfarm/types';
+import { CreateFarmInput, FarmType, OpeningHourEntry, PaymentMethod, UpdateFarmInput } from '@helvetfarm/types';
 
 export { CreateAdminDto, LoginDto } from './auth';
 

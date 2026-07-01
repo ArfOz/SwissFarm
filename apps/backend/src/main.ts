@@ -26,7 +26,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3330;
   await app.listen(port);
-  console.log(`SwissFarm API running on http://localhost:${port}`);
+  console.log(`HelvetFarm API running on http://localhost:${port}`);
 }
 
 bootstrap();

@@ -1,4 +1,4 @@
-import { Farm, FarmType, FarmWithDistance, FarmLocation } from '@swissfarm/types';
+import { Farm, FarmType, FarmWithDistance, FarmLocation } from '@helvetfarm/types';
 import apiClient from './client';
 
 /** Lightweight map markers — only id, name, location, canton, types */

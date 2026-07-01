@@ -20,7 +20,7 @@ importers:
 
   apps/admin:
     dependencies:
-      '@swissfarm/types':
+      '@helvetfarm/types':
         specifier: workspace:*
         version: link:../../packages/types
       leaflet:
@@ -66,6 +66,12 @@ importers:
 
   apps/backend:
     dependencies:
+      '@helvetfarm/dto':
+        specifier: workspace:*
+        version: link:../../packages/dto
+      '@helvetfarm/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@nestjs/common':
         specifier: ^10.3.0
         version: 10.4.22(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -87,12 +93,6 @@ importers:
       '@prisma/client':
         specifier: ^7.8.0
         version: 7.8.0(prisma@7.8.0(@types/react-dom@18.3.7(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@18.3.1(react@19.2.7))(react@19.2.7)(typescript@5.8.3))(typescript@5.8.3)
-      '@swissfarm/dto':
-        specifier: workspace:*
-        version: link:../../packages/dto
-      '@swissfarm/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -160,6 +160,12 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@helvetfarm/dto':
+        specifier: workspace:*
+        version: link:../../packages/dto
+      '@helvetfarm/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@maplibre/maplibre-react-native':
         specifier: ^11.3.6
         version: 11.3.6(@types/geojson@7946.0.16)(@types/react@19.2.17)(expo@55.0.27)(react-native@0.83.10(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7)
@@ -175,12 +181,6 @@ importers:
       '@react-navigation/native-stack':
         specifier: ^7.3.10
         version: 7.17.6(@react-navigation/native@7.3.4(react-native@0.83.10(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7))(react-native-safe-area-context@5.8.0(react-native@0.83.10(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7))(react-native-screens@4.25.2(react-native@0.83.10(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7))(react-native@0.83.10(@babel/core@7.29.7)(@react-native/metro-config@0.86.0(@babel/core@7.29.7))(@types/react@19.2.17)(react@19.2.7))(react@19.2.7)
-      '@swissfarm/dto':
-        specifier: workspace:*
-        version: link:../../packages/dto
-      '@swissfarm/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       '@types/lodash.throttle':
         specifier: ^4.1.9
         version: 4.1.9
@@ -287,7 +287,7 @@ importers:
 
   packages/dto:
     dependencies:
-      '@swissfarm/types':
+      '@helvetfarm/types':
         specifier: workspace:*
         version: link:../types
     devDependencies:

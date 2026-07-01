@@ -15,7 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@swissfarm/types": ["../../packages/types/src/index.ts"]
+      "@helvetfarm/types": ["../../packages/types/src/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.css", ".next/types/**/*.ts"],

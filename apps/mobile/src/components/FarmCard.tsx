@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Farm } from '@swissfarm/types';
+import { Farm } from '@helvetfarm/types';
 import { t } from '../i18n/translations';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';

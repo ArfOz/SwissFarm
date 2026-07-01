@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, ScrollView, StyleSheet, Platform, StatusBar } from 'react-native';
-import { CATEGORY_NAMES, CATEGORY_LABELS } from '@swissfarm/types';
+import { CATEGORY_NAMES, CATEGORY_LABELS } from '@helvetfarm/types';
 
 const STATUS_BAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight ?? 24 : 44;
 const CAT_BTN_WIDTH = 72;
@@ -25,7 +25,7 @@ export function MapHeader({
   return (
     <View style={[styles.header, { paddingTop: STATUS_BAR_HEIGHT }]}>
       <View style={styles.headerTopRow}>
-        <Text style={styles.headerTitle}>SwissFarm</Text>
+        <Text style={styles.headerTitle}>HelvetFarm</Text>
       </View>
 
       <ScrollView

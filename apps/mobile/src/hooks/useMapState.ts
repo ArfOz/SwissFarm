@@ -4,8 +4,8 @@ import Supercluster from 'supercluster';
 import throttle from 'lodash.throttle';
 import * as Location from 'expo-location';
 import { getFarmsByBBox, getFarmById, getFarmsForMap, getProductsByCategory, MapMarker } from '../api/farms';
-import type { Farm } from '@swissfarm/types';
-import { CATEGORY_NAMES, CATEGORY_LABELS, CATEGORY_IDS } from '@swissfarm/types';
+import type { Farm } from '@helvetfarm/types';
+import { CATEGORY_NAMES, CATEGORY_LABELS, CATEGORY_IDS } from '@helvetfarm/types';
 import type { NativeSyntheticEvent } from 'react-native';
 
 export interface ClusterProperties { cluster: boolean; cluster_id: number; point_count: number; point_count_abbreviated: number; id?: string; }

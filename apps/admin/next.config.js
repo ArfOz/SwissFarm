@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@swissfarm/types'],
+  transpilePackages: ['@helvetfarm/types'],
 };
 
 module.exports = nextConfig;

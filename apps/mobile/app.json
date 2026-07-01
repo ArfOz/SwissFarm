@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "SwissFarm",
-    "slug": "swissfarm-mobile",
+    "name": "HelvetFarm",
+    "slug": "helvetfarm-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,9 +17,9 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.swissfarm.mobile",
+      "bundleIdentifier": "com.helvetfarm.mobile",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "SwissFarm needs your location to show nearby farms on the map.",
+        "NSLocationWhenInUseUsageDescription": "HelvetFarm needs your location to show nearby farms on the map.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -28,7 +28,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.swissfarm.mobile",
+      "package": "com.helvetfarm.mobile",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
@@ -43,7 +43,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "SwissFarm needs your location to show nearby farms on the map."
+          "locationWhenInUsePermission": "HelvetFarm needs your location to show nearby farms on the map."
         }
       ],
       "expo-asset",

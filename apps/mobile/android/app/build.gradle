@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.swissfarm.mobile'
+    namespace 'com.helvetfarm.mobile'
     defaultConfig {
-        applicationId 'com.swissfarm.mobile'
+        applicationId 'com.helvetfarm.mobile'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

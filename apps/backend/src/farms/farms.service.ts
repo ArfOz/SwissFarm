@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@swissfarm/types';
+import { Farm, FarmType, FARM_TYPES, OpeningHourEntry, PaymentMethod } from '@helvetfarm/types';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
-import { Locale } from '@swissfarm/types';
+import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@helvetfarm/dto';
+import { Locale } from '@helvetfarm/types';
 import { productTranslations } from '../i18n/translations';
 import { Prisma } from '@prisma/client';
 

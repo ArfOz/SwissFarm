@@ -2,49 +2,49 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "SwissFarm: Backend",
+			"label": "HelvetFarm: Backend",
 			"type": "shell",
 			"command": "pnpm install --filter backend ; pnpm dev:backend",
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
-			"label": "SwissFarm: Admin",
+			"label": "HelvetFarm: Admin",
 			"type": "shell",
 			"command": "pnpm dev:admin",
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
-			"label": "SwissFarm: Admin",
+			"label": "HelvetFarm: Admin",
 			"type": "shell",
 			"command": "pnpm dev:admin",
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
-			"label": "SwissFarm: Backend",
+			"label": "HelvetFarm: Backend",
 			"type": "shell",
 			"command": "pnpm dev:backend",
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
-			"label": "SwissFarm: Backend",
+			"label": "HelvetFarm: Backend",
 			"type": "shell",
 			"command": "cd d:\\GithubProjects\\SwissFarm\\apps\\backend ; pnpm dev",
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
-			"label": "SwissFarm: Backend (PG)",
+			"label": "HelvetFarm: Backend (PG)",
 			"type": "shell",
 			"command": "cd d:\\GithubProjects\\SwissFarm\\apps\\backend ; pnpm dev",
 			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
-			"label": "SwissFarm: Admin",
+			"label": "HelvetFarm: Admin",
 			"type": "shell",
 			"command": "cd d:\\GithubProjects\\SwissFarm ; pnpm dev:admin",
 			"isBackground": true,

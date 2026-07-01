@@ -1,4 +1,4 @@
-import { Locale, SUPPORTED_LOCALES, LOCALE_LABELS, DynamicTranslations } from '@swissfarm/types';
+import { Locale, SUPPORTED_LOCALES, LOCALE_LABELS, DynamicTranslations } from '@helvetfarm/types';
 
 export { Locale, SUPPORTED_LOCALES, LOCALE_LABELS };
 
@@ -89,6 +89,12 @@ export const productTranslations: Record<string, Record<Locale, string>> = {
 };
 
 export const uiTranslations: Record<string, Record<Locale, string>> = {
+  // Tab navigation
+  'tab.map':       { en: 'Map',           de: 'Karte',          fr: 'Carte' },
+  'tab.list':      { en: 'List',          de: 'Liste',          fr: 'Liste' },
+  'tab.contact':   { en: 'Contact',       de: 'Kontakt',        fr: 'Contact' },
+  'tab.settings':  { en: 'Settings',      de: 'Einstellungen',  fr: 'Paramètres' },
+
   // Farm type filter
   'farms.allTypes':    { en: 'All Types',        de: 'Alle Typen',          fr: 'Tous les types' },
   'farms.newFarm':     { en: 'New Farm',         de: 'Neuer Hof',           fr: 'Nouvelle ferme' },

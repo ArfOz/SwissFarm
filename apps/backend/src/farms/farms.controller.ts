@@ -12,11 +12,11 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { Farm, FarmType } from '@swissfarm/types';
-import { Locale } from '@swissfarm/types';
+import { Farm, FarmType } from '@helvetfarm/types';
+import { Locale } from '@helvetfarm/types';
 import { Public } from '../libs/decorators/public.decorator';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
-import { CreateFarmDto, UpdateFarmDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, CreateProductDto, UpdateProductDto } from '@helvetfarm/dto';
 import { MapQueryDto } from './dto';
 import { FarmsService, FarmWithDistance, MapFarmMarker } from './farms.service';
 

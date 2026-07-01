@@ -11,10 +11,10 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { Farm, FarmType, CATEGORY_NAMES as PRODUCT_CATEGORY_NAMES } from '@swissfarm/types';
-import { Locale } from '@swissfarm/types';
+import { Farm, FarmType, CATEGORY_NAMES as PRODUCT_CATEGORY_NAMES } from '@helvetfarm/types';
+import { Locale } from '@helvetfarm/types';
 import { AdminOnly } from '../libs/decorators/admin-only.decorator';
-import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@swissfarm/dto';
+import { CreateFarmDto, UpdateFarmDto, UpdateProductCategoryDto, CreateProductDto, UpdateProductDto } from '@helvetfarm/dto';
 import { FarmsService } from './farms.service';
 
 @Controller('admin/farms')

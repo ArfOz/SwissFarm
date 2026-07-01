@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import { Locale, DynamicTranslations } from '@swissfarm/types';
-import { ProductInfo } from '@swissfarm/types';
+import { Locale, DynamicTranslations } from '@helvetfarm/types';
+import { ProductInfo } from '@helvetfarm/types';
 
 export type { Locale, DynamicTranslations };
 

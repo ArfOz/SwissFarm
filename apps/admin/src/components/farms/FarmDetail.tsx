@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Farm, DAYS, CreateFarmInput, PAYMENT_METHOD_LABELS } from '@swissfarm/types';
+import { Farm, DAYS, CreateFarmInput, PAYMENT_METHOD_LABELS } from '@helvetfarm/types';
 import dynamic from 'next/dynamic';
 import { useI18n } from '@/lib/i18n';
 import { updateFarm } from '@/lib/api';

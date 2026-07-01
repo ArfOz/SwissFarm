@@ -1,5 +1,5 @@
 {
-  "name": "@swissfarm/types",
+  "name": "@helvetfarm/types",
   "version": "0.0.1",
   "private": false,
   "main": "./src/index.ts",

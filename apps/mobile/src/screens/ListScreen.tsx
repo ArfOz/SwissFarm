@@ -10,7 +10,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { Farm } from '@swissfarm/types';
+import { Farm } from '@helvetfarm/types';
 import { getFarms } from '../api/farms';
 import FarmCard from '../components/FarmCard';
 import { RootStackParamList } from '../navigation/RootNavigator';

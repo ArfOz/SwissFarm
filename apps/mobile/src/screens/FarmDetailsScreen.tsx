@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { Farm, CATEGORY_LABELS, CATEGORY_ORDER } from '@swissfarm/types';
+import { Farm, CATEGORY_LABELS, CATEGORY_ORDER } from '@helvetfarm/types';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';

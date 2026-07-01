@@ -9,8 +9,8 @@ import {
   Body,
   Logger,
 } from '@nestjs/common';
-import { Farm, FarmType, FarmWithDistance } from '@swissfarm/types';
-import { Locale } from '@swissfarm/types';
+import { Farm, FarmType, FarmWithDistance } from '@helvetfarm/types';
+import { Locale } from '@helvetfarm/types';
 import { Public } from '../libs/decorators/public.decorator';
 import { FarmsService, MapMarkerLight, BBoxQuery } from './farms.service';
 
